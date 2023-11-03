@@ -13,7 +13,7 @@ class Input:
     def __setTime(self):
         self.__end = time.time()
         current = self.__end - self.__start
-        self.__delay = current - self.__prev
+        self.__delay = int((current - self.__prev) * 1000) / 1000
         self.__prev = current
     
     def on_press(self, key):
@@ -40,6 +40,12 @@ class Input:
 
     def on_click(self, x, y, button, pressed):
         if pressed:
+            print(str(button) + " is pressed")
+            self.__setTime()
+            self.__input.append(self.__delay)
+            self.__input.append(button)
+        else:
+            print(str(button) + " is released")
             self.__setTime()
             self.__input.append(self.__delay)
             self.__input.append(button)
@@ -50,12 +56,13 @@ class Input:
             with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as listener:
                 self.__start = time.time()
                 listener.join() 
+        self.__pressed.clear()
                 
     def play(self):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
         for i in self.__input:
-            if type(i) is float:
+            if type(i) is int:
                 time.sleep(i)
             else:
                 if type(i) is keyboard._win32.KeyCode or type(i) is keyboard.Key:
@@ -75,7 +82,7 @@ def main():
     input = Input()
     input.record()
     input.printInput()
-    
+
     # time.sleep(3)
     # input.play()
 
