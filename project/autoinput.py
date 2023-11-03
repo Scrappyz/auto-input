@@ -61,14 +61,23 @@ class Input:
     def play(self):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
-        for i in self.__input:
-            if type(i) is int:
-                time.sleep(i)
+        for i in range(len(self.__input)):
+            if type(self.__input[i]) is float:
+                time.sleep(self.__input[i])
+                i += 1
             else:
-                if type(i) is keyboard._win32.KeyCode or type(i) is keyboard.Key:
-                    keyboard_controller.press(i)
-                elif type(i) is mouse.Button:
-                    mouse_controller.click(i)
+                if type(self.__input[i]) is keyboard._win32.KeyCode or type(self.__input[i]) is keyboard.Key:
+                    if self.__input[i] in self.__pressed:
+                        print("Releasing " + str(self.__input[i]))
+                        keyboard_controller.release(self.__input[i])
+                        self.__pressed.remove(self.__input[i])
+                    else:
+                        print("Pressing " + str(self.__input[i]))
+                        keyboard_controller.press(self.__input[i])
+                        self.__pressed.add(self.__input[i])
+                elif type(self.__input[i]) is mouse.Button:
+                    print(str(self.__input[i]))
+        self.__pressed.clear()
                 
     def printInput(self):
         for i in range(len(self.__input)):
@@ -81,10 +90,11 @@ class Input:
 def main():
     input = Input()
     input.record()
+    print("===========")
     input.printInput()
-
-    # time.sleep(3)
-    # input.play()
-
+    print("===========")
+    
+    time.sleep(3)
+    input.play()
 if __name__ == "__main__":
     main()
