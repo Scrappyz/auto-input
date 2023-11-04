@@ -27,6 +27,11 @@ class Input:
         f = open(file_path)
         data = json.load(f)
         self.__record = data
+        
+    # File handling
+    def saveRecordToJson(self, file_path):
+        with open(file_path, "w") as f:
+            f.write(json.dumps(self.__record))
     
     # Helper
     def __setTime(self):
@@ -109,10 +114,12 @@ class Input:
                 listener.join() 
         self.__pressed.clear()
                 
-    def play(self):
+    def play(self, loop=False):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
-        for i in range(len(self.__record)):
+        length = len(self.__record)
+        i = 0
+        while i < length or loop:
             val = self.__record[i]
             if type(val) is int: # keyboard
                 key_code = self.intToKey(val)
@@ -145,6 +152,9 @@ class Input:
                 mouse.Controller().position = (val[0][0], val[0][1])
                 time.sleep(val[1])
                 mouse.Controller().position = (val[2][0], val[2][1])
+            i += 1
+            if i == length and loop:
+                i = 0
         self.__pressed.clear()
                 
     def printInput(self):
@@ -160,16 +170,8 @@ def main():
     current_path = Path(__file__).parent.resolve()
     input = Input()
     input.getRecordFromJson(Path.joinpath(current_path, "test.json"))
-    # input.record()
-    # print("===========")
-    # input.printInput()
-    # print("===========")
-    
-    time.sleep(3)
-    input.play()
-    # j = json.dumps(input.getRecord())
-    # with open(Path.joinpath(current_path, "test.json"), "w") as f:
-    #     f.write(j)
+    time.sleep(2)
+    input.play(loop=True)
     
 if __name__ == "__main__":
     main()
