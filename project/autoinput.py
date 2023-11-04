@@ -1,6 +1,7 @@
 import time
 import logging
 import pyautogui
+import json
 from pynput import mouse
 from pynput import keyboard
 
@@ -11,9 +12,8 @@ log.setLevel(logging.INFO)
 class Input:
     __input = []
     __pressed = set()
-    __current_mouse_pos = (-1, -1)
     __prev_mouse_pos = (-1, -1)
-    __mouse_has_moved = False
+    __mouse_move_counter = 0
     __start = 0
     __end = 0
     __delay = 0
@@ -23,7 +23,6 @@ class Input:
         self.__end = time.time()
         current = self.__end - self.__start
         self.__delay = float(int((current) * 1000) / 1000)
-        # self.__prev = current
         self.__start = time.time()
     
     # Keyboard listeners
@@ -47,14 +46,17 @@ class Input:
 
     # Mouse listeners
     def on_move(self, x, y):
-        curr = time.time() - self.__start
-        if curr >= 0.100:
-            #self.__mouse_has_moved = False
-            log.info("Time: {0}".format(time.time() - self.__start))
-            log.info("Mouse moved to ({0}, {1})".format(x, y))
-            self.__prev_mouse_pos = (x, y)
+        
+        if self.__mouse_move_counter < 10:
+            self.__mouse_move_counter += 1
+        else:
             self.__setTime()
-            log.info("Delay: " + str(self.__delay))
+            tup = (tuple(self.__prev_mouse_pos), self.__delay, (x, y))
+            self.__input.append(tup)
+            self.__mouse_move_counter = 0
+            self.__prev_mouse_pos = (x, y)
+            log.info(str(x) + " | " + str(y))
+            log.info(str(self.__delay))
 
     def on_click(self, x, y, button, pressed):
         self.__setTime()
@@ -75,7 +77,6 @@ class Input:
     def record(self):
         self.__input.clear()
         self.__prev_mouse_pos = pyautogui.position()
-        self.__mouse_has_moved = True
         with mouse.Listener(on_move=self.on_move, on_click=self.on_click, on_scroll=self.on_scroll) as listener:
             with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as listener:
                 self.__start = time.time()
@@ -87,30 +88,37 @@ class Input:
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
         for i in range(len(self.__input)):
-            if type(self.__input[i]) is float:
-                time.sleep(self.__input[i])
-            elif type(self.__input[i]) is int:
-                log.info("Scrolled {0}".format("down" if self.__input[i] < 0 else "up"))
-                mouse_controller.scroll(0, self.__input[i])
+            val = self.__input[i]
+            if type(val) is float:
+                time.sleep(val)
+            elif type(val) is int:
+                log.info("Scrolled {0}".format("down" if val < 0 else "up"))
+                mouse_controller.scroll(0, val)
             else:
-                if type(self.__input[i]) is keyboard._win32.KeyCode or type(self.__input[i]) is keyboard.Key:
-                    if self.__input[i] in self.__pressed:
-                        log.info("Releasing " + str(self.__input[i]))
-                        keyboard_controller.release(self.__input[i])
-                        self.__pressed.remove(self.__input[i])
+                if type(val) is keyboard._win32.KeyCode or type(val) is keyboard.Key:
+                    if val in self.__pressed:
+                        log.info("Releasing " + str(val))
+                        keyboard_controller.release(val)
+                        self.__pressed.remove(val)
                     else:
-                        log.info("Pressing " + str(self.__input[i]))
-                        keyboard_controller.press(self.__input[i])
-                        self.__pressed.add(self.__input[i])
-                elif type(self.__input[i]) is mouse.Button:
-                    if self.__input[i] in self.__pressed:
-                        log.info("Releasing " + str(self.__input[i]))
-                        mouse_controller.release(self.__input[i])
-                        self.__pressed.remove(self.__input[i])
+                        log.info("Pressing " + str(val))
+                        keyboard_controller.press(val)
+                        self.__pressed.add(val)
+                elif type(val) is mouse.Button:
+                    if val in self.__pressed:
+                        log.info("Releasing " + str(val))
+                        mouse_controller.release(val)
+                        self.__pressed.remove(val)
                     else:
-                        log.info("Pressing " + str(self.__input[i]))
-                        mouse_controller.press(self.__input[i])
-                        self.__pressed.add(self.__input[i])
+                        log.info("Pressing " + str(val))
+                        mouse_controller.press(val)
+                        self.__pressed.add(val)
+                else:
+                    # pyautogui.moveTo(val[0][0], val[0][1])
+                    # pyautogui.moveTo(val[2][0], val[2][1], val[1])
+                    mouse.Controller().position = (val[0][0], val[0][1])
+                    time.sleep(val[1])
+                    mouse.Controller().position = (val[2][0], val[2][1])
         self.__pressed.clear()
                 
     def printInput(self):
@@ -136,8 +144,9 @@ def main():
     input.printInput()
     print("===========")
     
-    # time.sleep(3)
-    # input.play()
+    time.sleep(3)
+    input.play()
+    
     # testSpeed(0.010)
     
 if __name__ == "__main__":
