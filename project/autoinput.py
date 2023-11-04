@@ -1,7 +1,7 @@
 import time
 import logging
-import pyautogui
 import json
+from pyautogui import position as currentMousePosition
 from pathlib import Path
 from pynput import mouse
 from pynput import keyboard
@@ -106,11 +106,10 @@ class Input:
     # Methods
     def record(self):
         self.__record.clear()
-        self.__prev_mouse_pos = pyautogui.position()
+        self.__prev_mouse_pos = currentMousePosition()
         with mouse.Listener(on_move=self.on_move, on_click=self.on_click, on_scroll=self.on_scroll) as listener:
             with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as listener:
                 self.__start = time.time()
-                self.__prev = self.__start
                 listener.join() 
         self.__pressed.clear()
                 
