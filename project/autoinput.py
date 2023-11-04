@@ -11,13 +11,14 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 class Input:
-    __record = []
-    __pressed = set()
-    __prev_mouse_pos = (-1, -1)
-    __mouse_move_counter = 0
-    __start = 0
-    __end = 0
-    __delay = 0
+    def __init__(self):
+        self.__record = []
+        self.__pressed = set()
+        self.__prev_mouse_pos = (-1, -1)
+        self.__mouse_move_counter = 0
+        self.__start = 0
+        self.__end = 0
+        self.__delay = 0
     
     # Getter
     def getRecord(self) -> list:
@@ -169,14 +170,18 @@ def main():
     current_path = Path(__file__).parent.resolve()
     record_path = Path.joinpath(current_path).parent.joinpath("records")
     input = Input()
+    input.record()
+    print("===========")
+    input.printInput()
+    print("==========")
     
     # time.sleep(2)
     # input.record()
     # input.saveRecordToJson(Path.joinpath(record_path, "test.json"))
     
-    input.getRecordFromJson(Path.joinpath(record_path, "test.json"))
-    time.sleep(2)
-    input.play(loop=True)
+    # input.getRecordFromJson(Path.joinpath(record_path, "test.json"))
+    # time.sleep(2)
+    # input.play(loop=True)
     
 if __name__ == "__main__":
     main()
