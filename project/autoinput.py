@@ -71,7 +71,7 @@ class Input:
 
     # Mouse listeners
     def on_move(self, x, y):
-        if self.__mouse_move_counter < 10:
+        if self.__mouse_move_counter < 100:
             self.__mouse_move_counter += 1
         else:
             self.__setTime()
@@ -167,8 +167,14 @@ class Input:
 
 def main():
     current_path = Path(__file__).parent.resolve()
+    record_path = Path.joinpath(current_path).parent.joinpath("records")
     input = Input()
-    input.getRecordFromJson(Path.joinpath(current_path, "test.json"))
+    
+    # time.sleep(2)
+    # input.record()
+    # input.saveRecordToJson(Path.joinpath(record_path, "test.json"))
+    
+    input.getRecordFromJson(Path.joinpath(record_path, "test.json"))
     time.sleep(2)
     input.play(loop=True)
     
