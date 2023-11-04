@@ -1,21 +1,17 @@
-import threading
-import time
+from time import sleep
+from pynput import keyboard
 
-def print_numbers1():
-    for i in range(1, 6):
-        print(f"Function 1: {i}")
-        time.sleep(0)
+def on_press(key):
+    try:
+        key_code = key.vk
+    except AttributeError:
+        key_code = key.value.vk
+    print(key_code)
 
-def print_numbers2():
-    for i in range(7, 12):
-        print(f"Function 2: {i}")
-        time.sleep(0)
-
-thread1 = threading.Thread(target=print_numbers1)
-thread2 = threading.Thread(target=print_numbers2)
-
-thread1.start()
-thread2.start()
-
-thread1.join()
-thread2.join()
+listener = keyboard.Listener(on_press=on_press)
+listener.start()
+try:
+    while listener.is_alive():
+        sleep(1)
+except KeyboardInterrupt:
+    listener.stop()
