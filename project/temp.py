@@ -1,44 +1,21 @@
-from pynput.keyboard import Listener  as KeyboardListener
-from pynput.mouse    import Listener  as MouseListener
-from pynput.keyboard import Key
+import threading
 import time
 
-input = []
-key = ""
-start = 0
-end = 0
-prev = 0
+def print_numbers1():
+    for i in range(1, 6):
+        print(f"Function 1: {i}")
+        time.sleep(0)
 
-def printInput():
-    global input
-    for i in range(len(input)):
-        print(i)
+def print_numbers2():
+    for i in range(7, 12):
+        print(f"Function 2: {i}")
+        time.sleep(0)
 
-def end_rec(key):
-    print(str(key))
+thread1 = threading.Thread(target=print_numbers1)
+thread2 = threading.Thread(target=print_numbers2)
 
-def on_press(key):
-    global prev, end
-    print(str(key))
-    end = time.time()
-    print(end - start - prev)
-    prev = end - start
-    if key == Key.ctrl_r:
-        return False
+thread1.start()
+thread2.start()
 
-def on_move(x, y):
-    print("Mouse moved to ({0}, {1})".format(x, y))
-
-def on_click(x, y, button, pressed):
-    if pressed:
-        print('Mouse clicked at ({0}, {1}) with {2}'.format(x, y, button))
-
-def on_scroll(x, y, dx, dy):
-    print('Mouse scrolled at ({0}, {1})({2}, {3})'.format(x, y, dx, dy))
-
-
-with MouseListener(on_click=on_click, on_scroll=on_scroll) as listener:
-    with KeyboardListener(on_press=on_press) as listener:
-        start = time.time()
-        listener.join()
-        
+thread1.join()
+thread2.join()
