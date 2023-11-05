@@ -152,12 +152,7 @@ class Input:
         self.__setTime()
         log.info("{0} is {1}".format(button, "pressed" if pressed else "released"))
         self.__record.append(self.__delay)
-        if button == mouse.Button.left:
-            self.__record.append("l")
-        elif button == mouse.Button.middle:
-            self.__record.append("m")
-        elif button == mouse.Button.right:
-            self.__record.append("r")
+        self.__record.append(self.mouseToStr(button))
             
     def __on_scroll(self, x, y, dx, dy):
         if not self.__recording:
@@ -206,11 +201,11 @@ class Input:
                 if val == 'l' or val == 'm' or val == 'r':
                     if val in self.__pressed:
                         log.info("Releasing " + val)
-                        mouse_controller.release(mouse.Button.left)
+                        mouse_controller.release(self.strToMouse(val))
                         self.__pressed.remove(val)
                     else:
                         log.info("Pressing " + val)
-                        mouse_controller.press(mouse.Button.left)
+                        mouse_controller.press(self.strToMouse(val))
                         self.__pressed.add(val)
                 elif val == 'u' or val == 'd':
                     if val == 'u':
