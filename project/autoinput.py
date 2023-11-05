@@ -1,6 +1,7 @@
 import time
 import logging
 import json
+from enum import Enum
 from pyautogui import position as currentMousePosition
 from pathlib import Path
 from pynput import mouse
@@ -11,11 +12,19 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 class Input:
+    class RecordOption(Enum):
+        MOUSE = 1
+        KEYBOARD = 2
+        MOUSE_AND_KEYBOARD = 3
+    
     def __init__(self):
         self.__record = []
         self.__recording = False
         self.__hotkey = {162, 160} # ctrl + shift
         self.__cancel_hotkey = {162, 90} # ctrl + z
+        self.__record_option = self.RecordOption.MOUSE_AND_KEYBOARD
+        
+        # Helper variables
         self.__pressed = set()
         self.__prev_mouse_pos = (-1, -1)
         self.__mouse_move_counter = 0
@@ -45,6 +54,9 @@ class Input:
         self.__start = time.time()
         
     def __removeHotkeyFromRecord(self):
+        if self.__record_option == self.RecordOption.MOUSE: # do not pop if keyboard not included
+            return
+        
         for i in range(3):
             self.__record.pop()
     
@@ -103,9 +115,9 @@ class Input:
         if key_code in self.__pressed:
             return
 
-        if self.__recording:
+        if self.__recording and self.__record_option != self.RecordOption.MOUSE:
             self.__setTime()
-            log.info(str(key) + " is pressed")
+            log.info("Pressed {0}".format(key))
             self.__record.append(self.__delay)
             self.__record.append(key_code)
             
@@ -134,9 +146,9 @@ class Input:
         if key_code not in self.__pressed:
             return
 
-        if self.__recording:
+        if self.__recording and self.__record_option != self.RecordOption.MOUSE:
             self.__setTime()
-            log.info(str(key) + " is released")
+            log.info("Released {0}".format(key))
             self.__record.append(self.__delay)
             self.__record.append(key_code)
         
@@ -151,6 +163,9 @@ class Input:
 
     # Mouse listeners
     def __on_move(self, x, y):
+        if self.__record_option == self.RecordOption.KEYBOARD:
+            return 
+        
         if not self.__recording:
             return
         
@@ -166,15 +181,21 @@ class Input:
             log.info(str(self.__delay))
 
     def __on_click(self, x, y, button, pressed):
+        if self.__record_option == self.RecordOption.KEYBOARD:
+            return 
+        
         if not self.__recording:
             return
         
         self.__setTime()
-        log.info("{0} is {1}".format(button, "pressed" if pressed else "released"))
+        log.info("{0} {1}".format("Pressed" if pressed else "Released", button))
         self.__record.append(self.__delay)
         self.__record.append(self.mouseToStr(button))
             
     def __on_scroll(self, x, y, dx, dy):
+        if self.__record_option == self.RecordOption.KEYBOARD:
+            return 
+        
         if not self.__recording:
             return
         
@@ -188,14 +209,17 @@ class Input:
             self.__record.append("u")
     
     # Methods
-    def record(self):
+    def record(self, option=RecordOption.MOUSE_AND_KEYBOARD):
         self.__record.clear()
         self.__prev_mouse_pos = currentMousePosition()
+        self.__record_option = option
+        
         print("[READY] Press 'ctrl + shift' to start recording or press 'ctrl + z' to cancel")
-        # with mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
-        with keyboard.Listener(on_press=self.__on_press, on_release=self.__on_release) as listener:
-            self.__start = time.time()
-            listener.join() 
+        with mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
+            with keyboard.Listener(on_press=self.__on_press, on_release=self.__on_release) as listener:
+                self.__start = time.time()
+                listener.join() 
+    
         self.__pressed.clear()
                 
     def play(self, loop=False):
@@ -260,7 +284,7 @@ def main():
     current_path = Path(__file__).parent.resolve()
     record_path = Path.joinpath(current_path).parent.joinpath("records")
     input = Input()
-    input.record()
+    input.record(option=Input.RecordOption.MOUSE_AND_KEYBOARD)
     # input.test()
 
     print("===========")
