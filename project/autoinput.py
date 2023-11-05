@@ -77,7 +77,22 @@ class Input:
         elif s == "m":
             return mouse.Button.middle
         elif s == "r":
-            return mouse.Button.right           
+            return mouse.Button.right  
+        
+    @staticmethod
+    def scrollIntToStr(n) -> str:
+        if n < 0:
+            return "d"
+        else:
+            return "u"         
+        
+    @staticmethod
+    def scrollStrToInt(s) -> int:
+        if s == "u":
+            return 1
+        elif s == "d":
+            return -1
+        return 0
     
     # Keyboard listeners
     def __on_press(self, key):
@@ -213,10 +228,7 @@ class Input:
                         mouse_controller.press(self.strToMouse(val))
                         self.__pressed.add(val)
                 elif val == 'u' or val == 'd':
-                    if val == 'u':
-                        mouse_controller.scroll(0, 1)
-                    else:
-                        mouse_controller.scroll(0, -1)
+                    mouse_controller.scroll(0, self.scrollStrToInt(val))
             else:
                 mouse.Controller().position = (val[0][0], val[0][1])
                 time.sleep(val[1])
