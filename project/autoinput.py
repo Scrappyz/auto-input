@@ -37,13 +37,18 @@ class Input:
         with open(file_path, "w") as f:
             f.write(json.dumps(self.__record))
     
-    # Helper
+    # Helpers
     def __setTime(self):
         self.__end = time.time()
         current = self.__end - self.__start
         self.__delay = float(int((current) * 1000) / 1000)
         self.__start = time.time()
+        
+    def __removeHotkeyFromRecord(self):
+        for i in range(3):
+            self.__record.pop()
     
+    # Convertions
     @staticmethod
     def keyToInt(key) -> int:
         try:
@@ -95,14 +100,14 @@ class Input:
             print("[END] Recording has been cancelled")
             return False
         
-        if self.__hotkey.issubset(self.__pressed):
+        if self.__pressed == self.__hotkey:
             if not self.__recording:
                 self.__recording = True
-                for i in self.__pressed:
-                    keyboard.Controller.release(i)
+                self.__pressed.clear()
                 print("[START] Recording input, press 'ctrl + shift' to end record")
             else:
                 self.__recording = False
+                self.__removeHotkeyFromRecord()
                 print("[END] Recording has finished")
                 return False
     
@@ -246,9 +251,9 @@ def main():
     input.record()
     # input.test()
 
-    # print("===========")
-    # input.printInput()
-    # print("==========")
+    print("===========")
+    input.printInput()
+    print("==========")
     
     # time.sleep(2)
     # input.record()
