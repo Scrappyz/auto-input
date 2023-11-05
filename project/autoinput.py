@@ -15,7 +15,7 @@ class Input:
         self.__record = []
         self.__recording = False
         self.__hotkey = {162, 160} # ctrl + shift
-        self.__cancel_hotkey = {}
+        self.__cancel_hotkey = {162, 90} # ctrl + z
         self.__pressed = set()
         self.__prev_mouse_pos = (-1, -1)
         self.__mouse_move_counter = 0
@@ -43,24 +43,46 @@ class Input:
         current = self.__end - self.__start
         self.__delay = float(int((current) * 1000) / 1000)
         self.__start = time.time()
-        
-    def keyToInt(self, key) -> int:
+    
+    @staticmethod
+    def keyToInt(key) -> int:
         try:
             key_code = key.vk
         except AttributeError:
             key_code = key.value.vk
         return key_code
     
-    def intToKey(self, n: int):
+    @staticmethod
+    def intToKey(n: int):
         return keyboard.KeyCode.from_vk(n)
+    
+    @staticmethod
+    def mouseToStr(button) -> str:
+        if button == mouse.Button.left:
+            return "l"
+        elif button == mouse.Button.middle:
+            return "m"
+        elif button == mouse.Button.right:
+            return "r"
+        
+    @staticmethod
+    def strToMouse(s):
+        if s == "l":
+            return mouse.Button.left
+        elif s == "m":
+            return mouse.Button.middle
+        elif s == "r":
+            return mouse.Button.right           
     
     # Keyboard listeners
     def __on_press(self, key):
         key_code = self.keyToInt(key)
-        if not self.__recording and key_code not in self.__hotkey:
+        if not self.__recording and key_code not in self.__hotkey and key_code not in self.__cancel_hotkey:
+            return
+        
+        if key_code in self.__pressed:
             return
 
-        log.info(str(key_code) + " is pressed")
         if self.__recording:
             self.__setTime()
             log.info(str(key) + " is pressed")
@@ -69,20 +91,29 @@ class Input:
             
         self.__pressed.add(key_code)
         
+        if not self.__recording and self.__cancel_hotkey.issubset(self.__pressed):
+            print("[END] Recording has been cancelled")
+            return False
+        
         if self.__hotkey.issubset(self.__pressed):
             if not self.__recording:
                 self.__recording = True
-                log.info("is recording")
+                for i in self.__pressed:
+                    keyboard.Controller.release(i)
+                print("[START] Recording input, press 'ctrl + shift' to end record")
             else:
                 self.__recording = False
-                log.info("done recording")
+                print("[END] Recording has finished")
                 return False
     
     def __on_release(self, key):
         key_code = self.keyToInt(key)
         if not self.__recording and key_code not in self.__hotkey:
             return
-        log.info(str(key_code) + " is released")
+        
+        if key_code not in self.__pressed:
+            return
+
         if self.__recording:
             self.__setTime()
             log.info(str(key) + " is released")
@@ -102,6 +133,7 @@ class Input:
     def __on_move(self, x, y):
         if not self.__recording:
             return
+        
         if self.__mouse_move_counter < 100:
             self.__mouse_move_counter += 1
         else:
@@ -116,6 +148,7 @@ class Input:
     def __on_click(self, x, y, button, pressed):
         if not self.__recording:
             return
+        
         self.__setTime()
         log.info("{0} is {1}".format(button, "pressed" if pressed else "released"))
         self.__record.append(self.__delay)
@@ -129,6 +162,7 @@ class Input:
     def __on_scroll(self, x, y, dx, dy):
         if not self.__recording:
             return
+        
         self.__setTime()
         self.__record.append(self.__delay)
         if dy < 0:
@@ -142,6 +176,7 @@ class Input:
     def record(self):
         self.__record.clear()
         self.__prev_mouse_pos = currentMousePosition()
+        print("[READY] Press 'ctrl + shift' to start recording or press 'ctrl + z' to cancel")
         # with mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
         with keyboard.Listener(on_press=self.__on_press, on_release=self.__on_release) as listener:
             self.__start = time.time()
@@ -213,9 +248,9 @@ def main():
     current_path = Path(__file__).parent.resolve()
     record_path = Path.joinpath(current_path).parent.joinpath("records")
     input = Input()
-    # input.record()
-    input.test()
-    
+    input.record()
+    # input.test()
+
     # print("===========")
     # input.printInput()
     # print("==========")
