@@ -65,16 +65,30 @@ class Input:
         if self.__record_option == self.RecordOption.MOUSE: # do not pop if keyboard not included
             return
         
+        self.__pressed.clear()
+        self.printInput()
+        
+        # 0 1 2 3 4
+        # 1 2 3 4 5
+        
         del_count = 0
+        prev = 0
         for i in self.__hotkey_pos_in_record.values():
             if i < 0:
                 continue
-            log.debug("Removed hotkey at position {0}".format(i))
-            del self.__record[i - del_count]
+            
+            index = i
+            if i > prev:
+                index -= del_count
+                
+            log.debug("Removed hotkey at [{0}] {1}".format(index, self.__record[index]))
+            del self.__record[index]
             del_count += 1
-            if i < len(self.__record):
-                log.debug("Removed delay at position {0}".format(i))
-                del self.__record[i]
+            prev = i
+            
+            if index < len(self.__record) and type(self.__record[index]) == float:
+                log.debug("Removed delay at [{0}] {1}".format(index, self.__record[index]))
+                del self.__record[index]
                 del_count += 1
         
     def __setKeysEqualToDictKeys(set: set, dict: dict) -> bool:

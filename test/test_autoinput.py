@@ -6,7 +6,8 @@ import autoinput
 
 class TestAutoInput(unittest.TestCase):
     def test_autoinput(self):
-        self.assertEqual(5, 5)
+        input = autoinput.Input()
+        
         
 if __name__ == "__main__":
     unittest.main()
