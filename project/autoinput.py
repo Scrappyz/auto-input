@@ -16,6 +16,10 @@ class Input:
         MOUSE = 1
         KEYBOARD = 2
         MOUSE_AND_KEYBOARD = 3
+        
+    class MouseMovement(Enum):
+        ABSOLUTE = 1
+        RELATIVE = 2
     
     def __init__(self):
         self.__record = []
@@ -59,7 +63,7 @@ class Input:
         
         for i in range(3):
             self.__record.pop()
-    
+            
     # Convertions
     @staticmethod
     def keyToInt(key) -> int:
@@ -131,6 +135,7 @@ class Input:
             if not self.__recording:
                 self.__recording = True
                 self.__pressed.clear()
+                self.__prev_mouse_pos = currentMousePosition()
                 print("[START] Recording input, press 'ctrl + shift' to end record")
             else:
                 self.__recording = False
@@ -169,7 +174,7 @@ class Input:
         if not self.__recording:
             return
         
-        if self.__mouse_move_counter < 100:
+        if self.__mouse_move_counter < 10:
             self.__mouse_move_counter += 1
         else:
             self.__setTime()
@@ -211,7 +216,6 @@ class Input:
     # Methods
     def record(self, option=RecordOption.MOUSE_AND_KEYBOARD):
         self.__record.clear()
-        self.__prev_mouse_pos = currentMousePosition()
         self.__record_option = option
         
         print("[READY] Press 'ctrl + shift' to start recording or press 'ctrl + z' to cancel")
@@ -222,7 +226,7 @@ class Input:
     
         self.__pressed.clear()
                 
-    def play(self, loop=False):
+    def play(self, loop=False, mouse_movement=MouseMovement.ABSOLUTE):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
         length = len(self.__record)
@@ -253,10 +257,17 @@ class Input:
                         self.__pressed.add(val)
                 elif val == 'u' or val == 'd':
                     mouse_controller.scroll(0, self.scrollStrToInt(val))
-            else:
-                mouse.Controller().position = (val[0][0], val[0][1])
-                time.sleep(val[1])
-                mouse.Controller().position = (val[2][0], val[2][1])
+            else: # mouse movement
+                if mouse_movement == self.MouseMovement.RELATIVE:
+                    current_mouse_pos = tuple(currentMousePosition())
+                    rel_x = current_mouse_pos[0] + (val[2][0] - val[0][0])
+                    rel_y = current_mouse_pos[1] + (val[2][1] - val[0][1])
+                    time.sleep(val[1])
+                    mouse_controller.position = (rel_x, rel_y)
+                else:
+                    mouse_controller.position = (val[0][0], val[0][1])
+                    time.sleep(val[1])
+                    mouse_controller.position = (val[2][0], val[2][1])
             i += 1
             if i == length and loop:
                 i = 0
@@ -284,12 +295,13 @@ def main():
     current_path = Path(__file__).parent.resolve()
     record_path = Path.joinpath(current_path).parent.joinpath("records")
     input = Input()
-    input.record(option=Input.RecordOption.MOUSE_AND_KEYBOARD)
+    input.record(option=Input.RecordOption.MOUSE)
     # input.test()
 
     print("===========")
     input.printInput()
     print("==========")
+    input.play(mouse_movement=Input.MouseMovement.RELATIVE)
     
     # time.sleep(2)
     # input.record()
