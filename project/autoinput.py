@@ -1,6 +1,7 @@
 import time
 import logging
 import json
+import argparse
 from enum import Enum
 from pyautogui import position as currentMousePosition
 from pathlib import Path
@@ -390,24 +391,38 @@ class Input:
 def main():
     current_path = Path(__file__).parent.resolve()
     record_path = Path.joinpath(current_path).parent.joinpath("records")
+    
+    # main
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers(dest="command1")
+    
+    cmd_play = subparser.add_parser("play", help="play a record")
+    cmd_play.add_argument("record", help="the record to play")
+    cmd_play.add_argument("--loop", action="store_true", dest="loop", help="loop playback")
+    cmd_play.add_argument("--mouse", action="")
+    # record
+    cmd_record = subparser.add_parser("record", help="record input")
+    record_subparser = cmd_record.add_subparsers(dest="command2")
+    # record add
+    cmd_add = record_subparser.add_parser("add", help="add a new record")
+    cmd_add.add_argument("record", type=str)
+    cmd_add.add_argument("-m", "--mouse", action="store_true", dest="mouse", help="enable or disable mouse in recording")
+    cmd_add.add_argument("-k", "--keyboard", action="store_true", dest="keyboard", help="enable or disable keyboard in recording")
+    # record remove
+    cmd_remove = record_subparser.add_parser("remove", help="delete record(s)")
+    cmd_remove.add_argument("-l", "--list", nargs='+', type=str, dest="records", help="a list of records")
+    
+    args = parser.parse_args()
+    if args.command1 == "record":
+        if args.command2 == "add":
+            print(args.record_name)
+            print(str(args.mouse))
+            print(str(args.keyboard))
+        elif args.command2 == "remove":
+            print(args.records)
+        else:
+            print("list of records")
     input = Input()
-    
-    input.record(option=Input.RecordOption.MOUSE_AND_KEYBOARD)
-    # # input.test()
-
-    print("===========")
-    input.printRecord()
-    print("==========")
-
-    time.sleep(2)
-    input.play(mouse_movement=Input.MouseMovement.ABSOLUTE, loop=True)
-    
-
-    # input.saveRecordToJson(Path.joinpath(record_path, "test.json"))
-    
-    # input.getRecordFromJson(Path.joinpath(record_path, "test.json"))
-    # time.sleep(2)
-    # input.play(loop=True)
     
 if __name__ == "__main__":
     main()
