@@ -65,13 +65,17 @@ class Input:
         if self.__record_option == self.RecordOption.MOUSE: # do not pop if keyboard not included
             return
         
+        del_count = 0
         for i in self.__hotkey_pos_in_record.values():
             if i < 0:
                 continue
             log.debug("Removed hotkey at position {0}".format(i))
-            del self.__record[i]
+            del self.__record[i - del_count]
+            del_count += 1
             if i < len(self.__record):
+                log.debug("Removed delay at position {0}".format(i))
                 del self.__record[i]
+                del_count += 1
         
     def __setKeysEqualToDictKeys(set: set, dict: dict) -> bool:
         dict_keys = dict.keys()
@@ -306,8 +310,30 @@ class Input:
                 
     def printInput(self):
         for i in range(len(self.__record)):
-            print(self.__record[i])
+            val = self.__record[i]
+            if type(val) == int:
+                if val in self.__pressed:
+                    print("[{0}] Released {1}".format(i, val))
+                    self.__pressed.remove(val)
+                else:
+                    print("[{0}] Pressed {1}".format(i, val))
+                    self.__pressed.add(val)
+            elif type(val) == float:
+                print("[{0}] Delay {1}s".format(i, val))
+            elif type(val) == str:
+                if val == 'l' or val == 'm' or val == 'r':
+                    if val in self.__pressed:
+                        print("[{0}] Released {1}".format(i, val))
+                        self.__pressed.remove(val)
+                    else:
+                        print("[{0}] Pressed {1}".format(i, val))
+                        self.__pressed.add(val)
+                elif val == 'u' or val == 'd':
+                    print("[{0}] Scrolled {1}".format(i, "down" if val == "d" else "up"))
+            else:
+                print("[{0}] {1}".format(i, val))
         print("Length: {0}".format(len(self.__record)))
+        self.__pressed.clear()
             
     def printTypes(self):
         for i in self.__record:
@@ -322,9 +348,9 @@ def main():
     print(sys.getsizeof(input.getRecord()))
     # # input.test()
 
-    # print("===========")
-    # input.printInput()
-    # print("==========")
+    print("===========")
+    input.printInput()
+    print("==========")
 
     # input.play(mouse_movement=Input.MouseMovement.RELATIVE)
     
