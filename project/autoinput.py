@@ -1,7 +1,6 @@
 import time
 import logging
 import json
-import sys
 from enum import Enum
 from pyautogui import position as currentMousePosition
 from pathlib import Path
