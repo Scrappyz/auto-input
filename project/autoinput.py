@@ -25,18 +25,19 @@ class Input:
     def __init__(self):
         self.__record = []
         self.__recording = False
+        self.__playing = False
         self.__hotkey = {162, 160} # ctrl + shift
         self.__cancel_hotkey = {162, 90} # ctrl + z
         self.__record_option = self.RecordOption.MOUSE_AND_KEYBOARD
         
         # Helper variables
-        self.__pressed = set()
+        self.__pressed = set() # keep track of pressed buttons
         self.__prev_mouse_pos = (-1, -1)
-        self.__mouse_move_counter = 0
-        self.__start = 0
-        self.__end = 0
-        self.__delay = 0
-        self.__hotkey_pos_in_record = {}
+        self.__mouse_move_counter = 0 # count the number of pixels the mouse has moved
+        self.__start = 0 # start time
+        self.__end = 0 # end time
+        self.__delay = 0 # delay
+        self.__hotkey_pos_in_record = {} # used to delete the hotkeys from record upon exiting
         for i in self.__hotkey:
             self.__hotkey_pos_in_record[i] = -1
     
@@ -84,17 +85,6 @@ class Input:
                 log.debug("Removed delay at [{0}] {1}".format(index, self.__record[index]))
                 del self.__record[index]
                 del_count += 1
-        
-    def __setKeysEqualToDictKeys(set: set, dict: dict) -> bool:
-        dict_keys = dict.keys()
-        if len(set) != len(dict_keys):
-            return False
-        
-        for i, j in zip(set, dict):
-            if i != j:
-                return False
-        
-        return True
             
     # Convertions
     @staticmethod
@@ -162,7 +152,7 @@ class Input:
             
         self.__pressed.add(key_code)
         
-        if not self.__recording and self.__cancel_hotkey.issubset(self.__pressed):
+        if not self.__recording and self.__pressed == self.__cancel_hotkey:
             print("[END] Recording has been cancelled")
             return False
         
@@ -191,6 +181,39 @@ class Input:
             log.info("Released {0}".format(key))
             self.__record.append(self.__delay)
             self.__record.append(key_code)
+        
+        self.__pressed.remove(key_code)
+        
+    def __on_press_for_play(self, key):
+        key_code = self.keyToInt(key)
+        if key_code not in self.__hotkey and key_code not in self.__cancel_hotkey:
+            return
+        
+        if key_code in self.__pressed:
+            return
+        
+        self.__pressed.add(key_code)
+        
+        if self.__pressed == self.__cancel_hotkey:
+            print("[END] Playback has been cancelled")
+            return False
+        
+        if self.__pressed == self.__hotkey:
+            if not self.__playing:
+                self.__playing = True
+                self.__pressed.clear()
+                print("[START] Playing record, press `ctrl + shift` to end playback")
+                return False
+            else:
+                self.__playing = False
+                print("[END] Playback stopped")
+                return False
+                
+    def __on_release_for_play(self, key):
+        key_code = self.keyToInt(key)
+        
+        if key_code not in self.__pressed:
+            return
         
         self.__pressed.remove(key_code)
         
@@ -263,9 +286,20 @@ class Input:
     def play(self, loop=False, mouse_movement=MouseMovement.ABSOLUTE):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
+        
+        print("[READY] Press 'ctrl + shift' to start playback or press 'ctrl + z' to cancel")
+        with keyboard.Listener(on_press=self.__on_press_for_play, on_release=self.__on_release_for_play) as listener:
+            listener.join()
+        
+        if not self.__playing:
+            return
+        
+        key_listener = keyboard.Listener(on_press=self.__on_press_for_play, on_release=self.__on_release_for_play)
+        key_listener.start()
+        
         length = len(self.__record)
         i = 0
-        while i < length or loop:
+        while self.__playing and (i < length or loop):
             val = self.__record[i]
             if type(val) is int: # keyboard
                 key_code = self.intToKey(val)
@@ -298,13 +332,20 @@ class Input:
                     rel_y = current_mouse_pos[1] + (val[2][1] - val[0][1])
                     time.sleep(val[1])
                     mouse_controller.position = (rel_x, rel_y)
+                    log.info("Moved mouse to position ({0}, {1})".format(rel_x, rel_y))
                 else:
                     mouse_controller.position = (val[0][0], val[0][1])
                     time.sleep(val[1])
                     mouse_controller.position = (val[2][0], val[2][1])
+                    log.info("Moved mouse to position ({0}, {1})".format(val[2][0], val[2][1]))
             i += 1
             if i == length and loop:
                 i = 0
+        
+        if not loop:
+            self.__playing = False
+            key_listener.stop() 
+            print("[END] Playback finished")      
         self.__pressed.clear()
         
     def test(self):
@@ -353,17 +394,16 @@ def main():
     input = Input()
     
     input.record(option=Input.RecordOption.MOUSE_AND_KEYBOARD)
-    print(sys.getsizeof(input.getRecord()))
     # # input.test()
 
     print("===========")
-    input.printInput()
+    input.printRecord()
     print("==========")
 
-    # input.play(mouse_movement=Input.MouseMovement.RELATIVE)
+    time.sleep(2)
+    input.play(mouse_movement=Input.MouseMovement.ABSOLUTE, loop=True)
     
-    # time.sleep(2)
-    # input.record()
+
     # input.saveRecordToJson(Path.joinpath(record_path, "test.json"))
     
     # input.getRecordFromJson(Path.joinpath(record_path, "test.json"))

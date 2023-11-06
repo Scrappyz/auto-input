@@ -1,17 +1,25 @@
-from time import sleep
+import time
 from pynput import keyboard
 
+run = True
+
 def on_press(key):
+    global run
     try:
         key_code = key.vk
     except AttributeError:
         key_code = key.value.vk
+    if key == keyboard.Key.shift_r:
+        run = False
     print(key_code)
 
-listener = keyboard.Listener(on_press=on_press)
-listener.start()
-try:
-    while listener.is_alive():
-        sleep(1)
-except KeyboardInterrupt:
-    listener.stop()
+def main():
+    k = keyboard.Listener(on_press=on_press)
+    k.start()
+    while run:
+        print("Running")
+        time.sleep(1)
+    k.stop()
+    
+if __name__ == "__main__":
+    main()
