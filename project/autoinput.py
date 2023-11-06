@@ -1,15 +1,16 @@
 import time
 import logging
 import json
+import sys
 from enum import Enum
 from pyautogui import position as currentMousePosition
 from pathlib import Path
 from pynput import mouse
 from pynput import keyboard
 
-logging.basicConfig(format="%(message)s")
+logging.basicConfig(format="[%(levelname)s] %(message)s")
 log = logging.getLogger()
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 class Input:
     class RecordOption(Enum):
@@ -35,6 +36,9 @@ class Input:
         self.__start = 0
         self.__end = 0
         self.__delay = 0
+        self.__hotkey_pos_in_record = {}
+        for i in self.__hotkey:
+            self.__hotkey_pos_in_record[i] = -1
     
     # Getter
     def getRecord(self) -> list:
@@ -61,8 +65,24 @@ class Input:
         if self.__record_option == self.RecordOption.MOUSE: # do not pop if keyboard not included
             return
         
-        for i in range(3):
-            self.__record.pop()
+        for i in self.__hotkey_pos_in_record.values():
+            if i < 0:
+                continue
+            log.debug("Removed hotkey at position {0}".format(i))
+            del self.__record[i]
+            if i < len(self.__record):
+                del self.__record[i]
+        
+    def __setKeysEqualToDictKeys(set: set, dict: dict) -> bool:
+        dict_keys = dict.keys()
+        if len(set) != len(dict_keys):
+            return False
+        
+        for i, j in zip(set, dict):
+            if i != j:
+                return False
+        
+        return True
             
     # Convertions
     @staticmethod
@@ -124,6 +144,9 @@ class Input:
             log.info("Pressed {0}".format(key))
             self.__record.append(self.__delay)
             self.__record.append(key_code)
+            if key_code in self.__hotkey:
+                log.debug("Stored hotkey position {0}".format(len(self.__record)-1))
+                self.__hotkey_pos_in_record[key_code] = len(self.__record)-1
             
         self.__pressed.add(key_code)
         
@@ -182,8 +205,7 @@ class Input:
             self.__record.append(tup)
             self.__mouse_move_counter = 0
             self.__prev_mouse_pos = (x, y)
-            log.info(str(x) + " | " + str(y))
-            log.info(str(self.__delay))
+            log.info("Moved mouse to position ({0}, {1})".format(x, y))
 
     def __on_click(self, x, y, button, pressed):
         if self.__record_option == self.RecordOption.KEYBOARD:
@@ -207,10 +229,10 @@ class Input:
         self.__setTime()
         self.__record.append(self.__delay)
         if dy < 0:
-            log.info("Scrolled down: " + str(dx) + " | " + str(dy))
+            log.info("Scrolled down")
             self.__record.append("d")
         else:
-            log.info("Scrolled up: " + str(dx) + " | " + str(dy))
+            log.info("Scrolled up")
             self.__record.append("u")
     
     # Methods
@@ -295,13 +317,16 @@ def main():
     current_path = Path(__file__).parent.resolve()
     record_path = Path.joinpath(current_path).parent.joinpath("records")
     input = Input()
-    input.record(option=Input.RecordOption.MOUSE)
-    # input.test()
+    
+    input.record(option=Input.RecordOption.MOUSE_AND_KEYBOARD)
+    print(sys.getsizeof(input.getRecord()))
+    # # input.test()
 
-    print("===========")
-    input.printInput()
-    print("==========")
-    input.play(mouse_movement=Input.MouseMovement.RELATIVE)
+    # print("===========")
+    # input.printInput()
+    # print("==========")
+
+    # input.play(mouse_movement=Input.MouseMovement.RELATIVE)
     
     # time.sleep(2)
     # input.record()
