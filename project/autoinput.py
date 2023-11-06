@@ -65,12 +65,6 @@ class Input:
         if self.__record_option == self.RecordOption.MOUSE: # do not pop if keyboard not included
             return
         
-        self.__pressed.clear()
-        self.printInput()
-        
-        # 0 1 2 3 4
-        # 1 2 3 4 5
-        
         del_count = 0
         prev = 0
         for i in self.__hotkey_pos_in_record.values():
@@ -322,7 +316,7 @@ class Input:
         except KeyboardInterrupt:
             listener.stop()
                 
-    def printInput(self):
+    def printRecord(self):
         for i in range(len(self.__record)):
             val = self.__record[i]
             if type(val) == int:
