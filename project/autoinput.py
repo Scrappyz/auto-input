@@ -62,7 +62,7 @@ class Input:
         self.__start = time.time()
         
     def __removeHotkeyFromRecord(self):
-        if self.__input_option == self.RecordOption.MOUSE: # do not pop if keyboard not included
+        if self.InputOption.KEYBOARD not in self.__input_option: # do not pop if keyboard not included
             return
         
         del_count = 0
@@ -140,7 +140,7 @@ class Input:
         if key_code in self.__pressed:
             return
 
-        if self.__recording and self.__input_option != self.RecordOption.MOUSE:
+        if self.__recording and self.InputOption.KEYBOARD in self.__input_option:
             self.__setTime()
             log.info("Pressed {0}".format(key))
             self.__record.append(self.__delay)
@@ -175,7 +175,7 @@ class Input:
         if key_code not in self.__pressed:
             return
 
-        if self.__recording and self.__input_option != self.RecordOption.MOUSE:
+        if self.__recording and self.InputOption.KEYBOARD in self.__input_option:
             self.__setTime()
             log.info("Released {0}".format(key))
             self.__record.append(self.__delay)
@@ -271,6 +271,9 @@ class Input:
     
     # Methods
     def record(self, option={InputOption.MOUSE, InputOption.KEYBOARD}):
+        if not option:
+            return
+        
         self.__record.clear()
         self.__input_option = option
         
@@ -386,6 +389,55 @@ class Input:
     def printTypes(self):
         for i in self.__record:
             print(type(i))
+        
+def strToJson(s: str) -> str:
+    if s.endswith(".json"):
+        return s
+    return s + ".json"
+
+def strToMouseMovement(s: str):
+    s = s.lower()
+    if s.startswith("abs"):
+        return Input.MouseMovement.ABSOLUTE
+    elif s.startswith("rel"):
+        return Input.MouseMovement.RELATIVE
+
+def addRecord(args, record_path: str):
+    input = Input()
+    input_option = set()
+    record_name = strToJson(args.record)
+    if args.mouse:
+        input_option.add(Input.InputOption.MOUSE)
+    if args.keyboard:
+        input_option.add(Input.InputOption.KEYBOARD)
+    
+    if not input_option:
+        print("[ERROR] Input option cannot be empty, try adding either '-m' or '-k' flag")
+        return
+    
+    input.record(option=input_option)
+    input.saveRecordToJson(Path.joinpath(record_path, record_name))
+    
+def removeRecord(args, record_path: str):
+    files = args.record
+    for i in files:  
+        file = Path.joinpath(record_path, strToJson(i))
+        if file.exists():
+            file.unlink()
+            print("[SUCCESS] Deleted record {0}".format(file.stem))
+    
+def listRecords(path: str):
+    print("Records:")
+    files = Path(path).glob('*')
+    for file in files:
+        print("  " + Path(file).stem)
+        
+def playRecord(args, record_path: str):
+    input = Input()
+    record_name = Path.joinpath(record_path, strToJson(args.record))
+    input.getRecordFromJson(record_name)
+    
+    input.play(args.loop, strToMouseMovement(args.movement))
 
 def main():
     current_path = Path(__file__).parent.resolve()
@@ -395,32 +447,44 @@ def main():
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(dest="command1")
     
-    cmd_play = subparser.add_parser("play", help="play a record")
-    cmd_play.add_argument("record", help="the record to play")
-    cmd_play.add_argument("--loop", action="store_true", dest="loop", help="loop playback")
     # record
     cmd_record = subparser.add_parser("record", help="record input")
     record_subparser = cmd_record.add_subparsers(dest="command2")
+    
     # record add
     cmd_add = record_subparser.add_parser("add", help="add a new record")
     cmd_add.add_argument("record", type=str)
-    cmd_add.add_argument("-m", "--mouse", action="store_true", dest="mouse", help="enable or disable mouse in recording")
-    cmd_add.add_argument("-k", "--keyboard", action="store_true", dest="keyboard", help="enable or disable keyboard in recording")
+    cmd_add.add_argument("-m", "--mouse", action="store_true", dest="mouse", help="enable mouse when recording")
+    cmd_add.add_argument("-k", "--keyboard", action="store_true", dest="keyboard", help="enable keyboard when recording")
+    
     # record remove
     cmd_remove = record_subparser.add_parser("remove", help="delete record(s)")
-    cmd_remove.add_argument("-l", "--list", nargs='+', type=str, dest="records", help="a list of records")
+    cmd_remove.add_argument("record", nargs='+', type=str, help="a list of records")
+    
+    # record list
+    cmd_remove = record_subparser.add_parser("list", help="list all records")
+    
+    # play
+    cmd_play = subparser.add_parser("play", help="play a record")
+    cmd_play.add_argument("record", nargs='?', help="the record to play")
+    cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
+    cmd_play.add_argument("--loop", action="store_true", dest="loop", help="loop playback")
+    cmd_play.add_argument("-s", "--speed", type=float, dest="speed", help="playback speed")
+    cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
     args = parser.parse_args()
     if args.command1 == "record":
         if args.command2 == "add":
-            print(args.record_name)
-            print(str(args.mouse))
-            print(str(args.keyboard))
+            addRecord(args, record_path)
         elif args.command2 == "remove":
-            print(args.records)
-        else:
-            print("list of records")
-    input = Input()
+            removeRecord(args, record_path)
+        elif args.command2 == "list":
+            listRecords(record_path)
+    elif args.command1 == "play":
+        if args.all:
+            listRecords(record_path)
+            exit()
+        playRecord(args, record_path)
     
 if __name__ == "__main__":
     main()
