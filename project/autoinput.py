@@ -10,7 +10,7 @@ from pynput import keyboard
 
 logging.basicConfig(format="[%(levelname)s] %(message)s")
 log = logging.getLogger()
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 class Input:
     class InputOption(Enum):
@@ -130,6 +130,14 @@ class Input:
         elif s == "d":
             return -1
         return 0
+    
+    def __speedUp(self, t: float, mult: float) -> float:
+        if t < 0:
+            return 0
+        if mult < 0:
+            return t
+        
+        return t * 1 / mult
     
     # Keyboard listeners
     def __on_press(self, key):
@@ -285,7 +293,7 @@ class Input:
     
         self.__pressed.clear()
                 
-    def play(self, loop=False, mouse_movement=MouseMovement.ABSOLUTE):
+    def play(self, loop=False, mouse_movement=MouseMovement.RELATIVE, speed=1):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
         
@@ -314,7 +322,7 @@ class Input:
                     keyboard_controller.press(key_code)
                     self.__pressed.add(key_code)
             elif type(val) is float: # delay
-                time.sleep(val)
+                time.sleep(self.__speedUp(val, speed))
             elif type(val) is str: # mouse buttons & scroll
                 if val == 'l' or val == 'm' or val == 'r':
                     if val in self.__pressed:
@@ -332,12 +340,12 @@ class Input:
                     current_mouse_pos = tuple(currentMousePosition())
                     rel_x = current_mouse_pos[0] + (val[2][0] - val[0][0])
                     rel_y = current_mouse_pos[1] + (val[2][1] - val[0][1])
-                    time.sleep(val[1])
+                    time.sleep(self.__speedUp(val[1], speed))
                     mouse_controller.position = (rel_x, rel_y)
                     log.info("Moved mouse to position ({0}, {1})".format(rel_x, rel_y))
                 else:
                     mouse_controller.position = (val[0][0], val[0][1])
-                    time.sleep(val[1])
+                    time.sleep(self.__speedUp(val[1], speed))
                     mouse_controller.position = (val[2][0], val[2][1])
                     log.info("Moved mouse to position ({0}, {1})".format(val[2][0], val[2][1]))
             i += 1
@@ -373,7 +381,7 @@ class Input:
                 print("[{0}] Delay {1}s".format(i, val))
             elif type(val) == str:
                 if val == 'l' or val == 'm' or val == 'r':
-                    if val in self.__pressed:
+                    if val in self.__pressed: 
                         print("[{0}] Released {1}".format(i, val))
                         self.__pressed.remove(val)
                     else:
@@ -436,8 +444,7 @@ def playRecord(args, record_path: str):
     input = Input()
     record_name = Path.joinpath(record_path, strToJson(args.record))
     input.getRecordFromJson(record_name)
-    
-    input.play(args.loop, strToMouseMovement(args.movement))
+    input.play(args.loop, strToMouseMovement(args.movement), args.speed)
 
 def main():
     current_path = Path(__file__).parent.resolve()
@@ -445,6 +452,7 @@ def main():
     
     # main
     parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.1.0-alpha"))
     subparser = parser.add_subparsers(dest="command1")
     
     # record
@@ -469,7 +477,7 @@ def main():
     cmd_play.add_argument("record", nargs='?', help="the record to play")
     cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
     cmd_play.add_argument("--loop", action="store_true", dest="loop", help="loop playback")
-    cmd_play.add_argument("-s", "--speed", type=float, dest="speed", help="playback speed")
+    cmd_play.add_argument("-s", "--speed", type=float, dest="speed", help="speed multiplier for the playback")
     cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
     args = parser.parse_args()
