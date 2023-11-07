@@ -3,6 +3,7 @@ import logging
 import json
 import argparse
 from enum import Enum
+from os import getcwd
 from pyautogui import position as currentMousePosition
 from pathlib import Path
 from pynput import mouse
@@ -410,7 +411,11 @@ def strToMouseMovement(s: str):
     elif s.startswith("rel"):
         return Input.MouseMovement.RELATIVE
 
-def addRecord(args, record_path: str):
+def addRecord(args, record_dir):
+    record_dir = Path(record_dir)
+    if not record_dir.exists():
+        record_dir.mkdir(parents=True)
+        
     input = Input()
     input_option = set()
     record_name = strToJson(args.record)
@@ -424,35 +429,60 @@ def addRecord(args, record_path: str):
         return
     
     input.record(option=input_option)
-    input.saveRecordToJson(Path.joinpath(record_path, record_name))
+    input.saveRecordToJson(record_dir.joinpath(record_name))
     
-def removeRecord(args, record_path: str):
+def removeRecord(args, record_dir):
+    record_dir = Path(record_dir)
     files = args.record
     for i in files:  
-        file = Path.joinpath(record_path, strToJson(i))
+        file = record_dir.joinpath(strToJson(i))
         if file.exists():
             file.unlink()
             print("[SUCCESS] Deleted record {0}".format(file.stem))
     
-def listRecords(path: str):
+def listRecords(path):
+    path = Path(path)
+    if not path.exists():
+        print("[ERROR] Record directory does not exist")
+        return
+        
     print("Records:")
-    files = Path(path).glob('*')
+    files = path.glob('*')
     for file in files:
         print("  " + file.stem)
         
-def playRecord(args, record_path: str):
+def playRecord(args, record_dir):
     input = Input()
-    record_name = Path.joinpath(record_path, strToJson(args.record))
+    record_name = Path.joinpath(record_dir, strToJson(args.record))
     input.getRecordFromJson(record_name)
     input.play(args.loop, strToMouseMovement(args.movement), args.speed)
+    
+def readConfig(config_path) -> dict:
+    with open(config_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+def writeConfig(config, config_path):
+    data = json.dumps(config, indent=4)
+    with open(config_path, 'w') as file:
+        file.write(data)
 
 def main():
-    current_path = Path(__file__).parent.resolve()
-    record_path = Path.joinpath(current_path).parent.joinpath("records")
+    current_dir = Path(__file__).parent.resolve()
+    config_path = current_dir.joinpath("config.json")
+    config = {"record_directory" : str(current_dir.joinpath("records"))}
+    
+    if not config_path.exists():
+        writeConfig(config, config_path)
+    else:
+        config = readConfig(config_path)
+        
+    record_dir = config["record_directory"]
     
     # main
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.1.0-alpha"))
+    parser.add_argument("--set-record-dir", nargs=1, type=str, dest="set_record_dir", help="set the directory to store and look for records")
     subparser = parser.add_subparsers(dest="command1")
     
     # record
@@ -481,18 +511,21 @@ def main():
     cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
     args = parser.parse_args()
-    if args.command1 == "record":
+    if args.set_record_dir:
+        config["record_directory"] = str(Path().joinpath(getcwd(), args.set_record_dir[0]))
+        writeConfig(config, config_path)
+    elif args.command1 == "record":
         if args.command2 == "add":
-            addRecord(args, record_path)
+            addRecord(args, record_dir)
         elif args.command2 == "remove":
-            removeRecord(args, record_path)
+            removeRecord(args, record_dir)
         elif args.command2 == "list":
-            listRecords(record_path)
+            listRecords(record_dir)
     elif args.command1 == "play":
         if args.all:
-            listRecords(record_path)
+            listRecords(record_dir)
             exit()
-        playRecord(args, record_path)
+        playRecord(args, record_dir)
     
 if __name__ == "__main__":
     main()
