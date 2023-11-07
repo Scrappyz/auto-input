@@ -13,10 +13,9 @@ log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
 class Input:
-    class RecordOption(Enum):
+    class InputOption(Enum):
         MOUSE = 1
         KEYBOARD = 2
-        MOUSE_AND_KEYBOARD = 3
         
     class MouseMovement(Enum):
         ABSOLUTE = 1
@@ -28,7 +27,7 @@ class Input:
         self.__playing = False
         self.__hotkey = {162, 160} # ctrl + shift
         self.__cancel_hotkey = {162, 90} # ctrl + z
-        self.__record_option = self.RecordOption.MOUSE_AND_KEYBOARD
+        self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
         
         # Helper variables
         self.__pressed = set() # keep track of pressed buttons
@@ -63,7 +62,7 @@ class Input:
         self.__start = time.time()
         
     def __removeHotkeyFromRecord(self):
-        if self.__record_option == self.RecordOption.MOUSE: # do not pop if keyboard not included
+        if self.__input_option == self.RecordOption.MOUSE: # do not pop if keyboard not included
             return
         
         del_count = 0
@@ -141,7 +140,7 @@ class Input:
         if key_code in self.__pressed:
             return
 
-        if self.__recording and self.__record_option != self.RecordOption.MOUSE:
+        if self.__recording and self.__input_option != self.RecordOption.MOUSE:
             self.__setTime()
             log.info("Pressed {0}".format(key))
             self.__record.append(self.__delay)
@@ -176,7 +175,7 @@ class Input:
         if key_code not in self.__pressed:
             return
 
-        if self.__recording and self.__record_option != self.RecordOption.MOUSE:
+        if self.__recording and self.__input_option != self.RecordOption.MOUSE:
             self.__setTime()
             log.info("Released {0}".format(key))
             self.__record.append(self.__delay)
@@ -226,7 +225,7 @@ class Input:
 
     # Mouse listeners
     def __on_move(self, x, y):
-        if self.__record_option == self.RecordOption.KEYBOARD:
+        if self.InputOption.MOUSE not in self.__input_option:
             return 
         
         if not self.__recording:
@@ -243,7 +242,7 @@ class Input:
             log.info("Moved mouse to position ({0}, {1})".format(x, y))
 
     def __on_click(self, x, y, button, pressed):
-        if self.__record_option == self.RecordOption.KEYBOARD:
+        if self.InputOption.MOUSE not in self.__input_option:
             return 
         
         if not self.__recording:
@@ -255,7 +254,7 @@ class Input:
         self.__record.append(self.mouseToStr(button))
             
     def __on_scroll(self, x, y, dx, dy):
-        if self.__record_option == self.RecordOption.KEYBOARD:
+        if self.InputOption.MOUSE not in self.__input_option:
             return 
         
         if not self.__recording:
@@ -271,9 +270,9 @@ class Input:
             self.__record.append("u")
     
     # Methods
-    def record(self, option=RecordOption.MOUSE_AND_KEYBOARD):
+    def record(self, option={InputOption.MOUSE, InputOption.KEYBOARD}):
         self.__record.clear()
-        self.__record_option = option
+        self.__input_option = option
         
         print("[READY] Press 'ctrl + shift' to start recording or press 'ctrl + z' to cancel")
         with mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
@@ -399,7 +398,6 @@ def main():
     cmd_play = subparser.add_parser("play", help="play a record")
     cmd_play.add_argument("record", help="the record to play")
     cmd_play.add_argument("--loop", action="store_true", dest="loop", help="loop playback")
-    cmd_play.add_argument("--mouse", action="")
     # record
     cmd_record = subparser.add_parser("record", help="record input")
     record_subparser = cmd_record.add_subparsers(dest="command2")
