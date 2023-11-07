@@ -430,7 +430,7 @@ def listRecords(path: str):
     print("Records:")
     files = Path(path).glob('*')
     for file in files:
-        print("  " + Path(file).stem)
+        print("  " + file.stem)
         
 def playRecord(args, record_path: str):
     input = Input()
