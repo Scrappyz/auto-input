@@ -7,7 +7,7 @@ A python program created to automate the mouse and keyboard.
 - [Usage](#usage)
 
 ## Installation
-1. Go to [releases]()
+1. Go to [releases](https://github.com/Scrappyz/auto-input/releases).
 2. Download the executable.
 3. Place the executable in an empty directory.
 4. Run the executable in the command-line.
