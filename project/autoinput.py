@@ -2,6 +2,7 @@ import time
 import logging
 import json
 import argparse
+from sys import executable as executablePath
 from enum import Enum
 from os import getcwd
 from pyautogui import position as currentMousePosition
@@ -294,7 +295,7 @@ class Input:
     
         self.__pressed.clear()
                 
-    def play(self, loop=False, mouse_movement=MouseMovement.RELATIVE, speed=1):
+    def play(self, loop=False, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
         
@@ -452,8 +453,9 @@ def listRecords(path):
         print("  " + file.stem)
         
 def playRecord(args, record_dir):
+    record_dir = Path(record_dir)
     input = Input()
-    record_name = Path.joinpath(record_dir, strToJson(args.record))
+    record_name = str(record_dir.joinpath(strToJson(args.record)))
     input.getRecordFromJson(record_name)
     input.play(args.loop, strToMouseMovement(args.movement), args.speed)
     
@@ -468,10 +470,10 @@ def writeConfig(config, config_path):
         file.write(data)
 
 def main():
-    current_dir = Path(__file__).parent.resolve()
+    current_dir = Path(executablePath).parent.resolve()
     config_path = current_dir.joinpath("config.json")
     config = {"record_directory" : str(current_dir.joinpath("records"))}
-    
+
     if not config_path.exists():
         writeConfig(config, config_path)
     else:
@@ -507,7 +509,7 @@ def main():
     cmd_play.add_argument("record", nargs='?', help="the record to play")
     cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
     cmd_play.add_argument("--loop", action="store_true", dest="loop", help="loop playback")
-    cmd_play.add_argument("-s", "--speed", type=float, dest="speed", help="speed multiplier for the playback")
+    cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
     cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
     args = parser.parse_args()
