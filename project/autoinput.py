@@ -86,6 +86,11 @@ class Input:
                 log.debug("Removed delay at [{0}] {1}".format(index, self.__record[index]))
                 del self.__record[index]
                 del_count += 1
+                
+    def isRecordEmpty(self) -> bool:
+        if not self.__record:
+            return True
+        return False
             
     # Convertions
     @staticmethod
@@ -430,7 +435,8 @@ def addRecord(args, record_dir):
         return
     
     input.record(option=input_option)
-    input.saveRecordToJson(record_dir.joinpath(record_name))
+    if not input.isRecordEmpty():
+        input.saveRecordToJson(record_dir.joinpath(record_name))
     
 def removeRecord(args, record_dir):
     record_dir = Path(record_dir)
