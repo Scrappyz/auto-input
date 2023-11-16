@@ -176,6 +176,7 @@ class Input:
                 self.__pressed.clear()
                 self.__prev_mouse_pos = currentMousePosition()
                 print("[START] Recording input, press 'ctrl + shift' to end record")
+                self.__start = time.time()
             else:
                 self.__recording = False
                 self.__removeHotkeyFromRecord()
@@ -295,7 +296,6 @@ class Input:
         print("[READY] Press 'ctrl + shift' to start recording or press 'ctrl + z' to cancel")
         with mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
             with keyboard.Listener(on_press=self.__on_press, on_release=self.__on_release) as listener:
-                self.__start = time.time()
                 listener.join() 
     
         self.__pressed.clear()
