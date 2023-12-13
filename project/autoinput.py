@@ -489,7 +489,6 @@ def main():
     # main
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.1.1-alpha"))
-    parser.add_argument("--set-record-dir", nargs=1, type=str, dest="set_record_dir", help="set the directory to store and look for records")
     subparser = parser.add_subparsers(dest="command1")
     
     # record
@@ -530,10 +529,7 @@ def main():
     cmd_config_get.add_argument("config", nargs='*', type=str, help="the config values to get")
     
     args = parser.parse_args()
-    if args.set_record_dir:
-        config["recordDirectory"] = str(Path().joinpath(getcwd(), args.set_record_dir[0]))
-        writeConfig(config, config_path)
-    elif args.command1 == "record":
+    if args.command1 == "record":
         if args.command2 == "add":
             addRecord(args, record_dir)
         elif args.command2 == "remove":
