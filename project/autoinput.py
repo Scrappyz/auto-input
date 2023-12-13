@@ -497,17 +497,17 @@ def main():
     record_subparser = cmd_record.add_subparsers(dest="command2")
     
     # record add
-    cmd_add = record_subparser.add_parser("add", help="add a new record")
-    cmd_add.add_argument("record", type=str)
-    cmd_add.add_argument("-m", "--mouse", action="store_true", dest="mouse", help="enable mouse when recording")
-    cmd_add.add_argument("-k", "--keyboard", action="store_true", dest="keyboard", help="enable keyboard when recording")
+    cmd_record_add = record_subparser.add_parser("add", help="add a new record")
+    cmd_record_add.add_argument("record", type=str)
+    cmd_record_add.add_argument("-m", "--mouse", action="store_true", dest="mouse", help="enable mouse when recording")
+    cmd_record_add.add_argument("-k", "--keyboard", action="store_true", dest="keyboard", help="enable keyboard when recording")
     
     # record remove
-    cmd_remove = record_subparser.add_parser("remove", help="delete record(s)")
-    cmd_remove.add_argument("record", nargs='+', type=str, help="a list of records")
+    cmd_record_remove = record_subparser.add_parser("remove", help="delete record(s)")
+    cmd_record_remove.add_argument("record", nargs='+', type=str, help="a list of records")
     
     # record list
-    cmd_remove = record_subparser.add_parser("list", help="list all records")
+    cmd_record_list = record_subparser.add_parser("list", help="list all records")
     
     # play
     cmd_play = subparser.add_parser("play", help="play a record")
@@ -518,7 +518,12 @@ def main():
     cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
     # config
+    cmd_config = subparser.add_parser("config", help="config settings")
+    config_subparser = cmd_config.add_subparsers(dest="command2")
     
+    # config set
+    cmd_config_set = config_subparser.add_parser("set", help="set config settings")
+    cmd_config_set.add_argument("config", nargs=2, type=str, help="the config to change to a new value")
     
     args = parser.parse_args()
     if args.set_record_dir:
@@ -536,6 +541,16 @@ def main():
             listRecords(record_dir)
             exit()
         playRecord(args, record_dir)
+    elif args.command1 == "config":
+        if args.command2 == "set":
+            key = args.config[0]
+            val = args.config[1]
+            if key in config:
+                config[key] = val
+                writeConfig(config, config_path)
+                print("[SUCCESS] Config setting \"{0}\" has been set to \"{1}\"".format(key, val))
+            else:
+                print("[ERROR] Config setting \"{0}\" does not exist".format(key))
     
 if __name__ == "__main__":
     main()
