@@ -174,19 +174,6 @@ class Input:
         if not self.__recording and self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
             print("[END] Recording has been cancelled")
             return False
-        
-        # if self.__pressed == self.__hotkeys[self.Hotkey.START]:
-        #     if not self.__recording:
-        #         self.__recording = True
-        #         self.__pressed.clear()
-        #         self.__prev_mouse_pos = currentMousePosition()
-        #         print("[START] Recording input, press 'ctrl + shift' to end record")
-        #         self.__start = time.time()
-        #     else:
-        #         self.__recording = False
-        #         self.__removeHotkeyFromRecord()
-        #         print("[END] Recording has finished")
-        #         return False
             
         if not self.__recording and self.__pressed == self.__hotkeys[self.Hotkey.START]:
             self.__recording = True
@@ -226,20 +213,30 @@ class Input:
         
         self.__pressed.add(key_code)
         
-        if self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
+        if self.__pressed == self.__hotkeys[self.Hotkey.CANCEL]:
             print("[END] Playback has been cancelled")
             return False
         
-        if self.__pressed == self.__hotkeys[self.Hotkey.START]:
-            if not self.__playing:
-                self.__playing = True
-                self.__pressed.clear()
-                print("[START] Playing record, press `ctrl + shift` to end playback")
-                return False
-            else:
-                self.__playing = False
-                print("[END] Playback stopped")
-                return False
+        if not self.__playing and self.__pressed == self.__hotkeys[self.Hotkey.START]:
+            self.__playing = True
+            self.__pressed.clear()
+            print("[START] Playing record, press `ctrl + alt` to end playback")
+            return False
+        elif self.__playing and self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
+            self.__playing = False
+            print("[END] Playback stopped")
+            return False
+        
+        # if self.__pressed == self.__hotkeys[self.Hotkey.START]:
+        #     if not self.__playing:
+        #         self.__playing = True
+        #         self.__pressed.clear()
+        #         print("[START] Playing record, press `ctrl + shift` to end playback")
+        #         return False
+        #     else:
+        #         self.__playing = False
+        #         print("[END] Playback stopped")
+        #         return False
                 
     def __on_release_for_play(self, key):
         key_code = self.keyToInt(key)
