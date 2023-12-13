@@ -1,5 +1,7 @@
 *
-
+!project/
+!project/**
+project/config.json
 !.gitignore
 !test/
 !test/**
