@@ -2,6 +2,7 @@
 !project/
 !project/**
 project/__pycache__
+project/config.json
 !.gitignore
 !test/
 !test/**
