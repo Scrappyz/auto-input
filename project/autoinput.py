@@ -2,7 +2,6 @@ import time
 import logging
 import json
 import argparse
-from sys import executable as executablePath
 from enum import Enum
 from os import getcwd
 from pyautogui import position as currentMousePosition
@@ -476,16 +475,16 @@ def writeConfig(config, config_path):
         file.write(data)
 
 def main():
-    current_dir = Path(executablePath).parent.resolve()
+    current_dir = Path(__file__).parent.resolve()
     config_path = current_dir.joinpath("config.json")
-    config = {"record_directory" : str(current_dir.joinpath("records"))}
+    config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
     if not config_path.exists():
         writeConfig(config, config_path)
     else:
         config = readConfig(config_path)
         
-    record_dir = config["record_directory"]
+    record_dir = config["recordDirectory"]
     
     # main
     parser = argparse.ArgumentParser()
@@ -518,9 +517,12 @@ def main():
     cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
     cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
+    # config
+    
+    
     args = parser.parse_args()
     if args.set_record_dir:
-        config["record_directory"] = str(Path().joinpath(getcwd(), args.set_record_dir[0]))
+        config["recordDirectory"] = str(Path().joinpath(getcwd(), args.set_record_dir[0]))
         writeConfig(config, config_path)
     elif args.command1 == "record":
         if args.command2 == "add":
