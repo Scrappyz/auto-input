@@ -10,7 +10,10 @@ All notable changes on this project will be documented on this file.
 ### To be added
 - Customizable hotkeys
 - Pause hotkey for record and playback
-- Manipulate config values with `config set`
+
+### Added
+- Set config values with `config set`.
+- Get config values with `config get`.
 
 ## [0.1.1-alpha] - 2023-12-13
 ### Fixed
