@@ -525,6 +525,10 @@ def main():
     cmd_config_set = config_subparser.add_parser("set", help="set config settings")
     cmd_config_set.add_argument("config", nargs=2, type=str, help="the config to change to a new value")
     
+    # config get
+    cmd_config_get = config_subparser.add_parser("get", help="get config values")
+    cmd_config_get.add_argument("config", nargs='*', type=str, help="the config values to get")
+    
     args = parser.parse_args()
     if args.set_record_dir:
         config["recordDirectory"] = str(Path().joinpath(getcwd(), args.set_record_dir[0]))
@@ -551,6 +555,16 @@ def main():
                 print("[SUCCESS] Config setting \"{0}\" has been set to \"{1}\"".format(key, val))
             else:
                 print("[ERROR] Config setting \"{0}\" does not exist".format(key))
+        elif args.command2 == "get":
+            if not args.config:
+                for k, v in config.items():
+                    print("\"{0}\": \"{1}\"".format(k, v))
+            else:
+                for i in args.config:
+                    if i in config:
+                        print("\"{0}\": \"{1}\"".format(i, config[i]))
+                    else: 
+                        print("[ERROR] Config setting \"{0}\" does not exist".format(i))
     
 if __name__ == "__main__":
     main()
