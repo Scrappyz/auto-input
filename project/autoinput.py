@@ -489,7 +489,7 @@ def main():
     
     # main
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.1.0-alpha"))
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.1.1-alpha"))
     parser.add_argument("--set-record-dir", nargs=1, type=str, dest="set_record_dir", help="set the directory to store and look for records")
     subparser = parser.add_subparsers(dest="command1")
     
