@@ -3,6 +3,7 @@ import logging
 import json
 import argparse
 from enum import Enum
+from enum import IntEnum
 from os import getcwd
 from pyautogui import position as currentMousePosition
 from pathlib import Path
@@ -21,13 +22,18 @@ class Input:
     class MouseMovement(Enum):
         ABSOLUTE = 1
         RELATIVE = 2
+        
+    class Hotkey(IntEnum):
+        START = 0
+        PAUSE = 1
+        STOP = 2
+        CANCEL = 3
     
     def __init__(self):
         self.__record = []
         self.__recording = False
         self.__playing = False
-        self.__hotkey = {162, 160} # ctrl + shift
-        self.__cancel_hotkey = {162, 90} # ctrl + z
+        self.__hotkeys = [{162, 160}, {}, {162, 164}, {162, 90}]
         self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
         
         # Helper variables
@@ -38,7 +44,7 @@ class Input:
         self.__end = 0 # end time
         self.__delay = 0 # delay
         self.__hotkey_pos_in_record = {} # used to delete the hotkeys from record upon exiting
-        for i in self.__hotkey:
+        for i in self.__hotkeys[self.Hotkey.START]:
             self.__hotkey_pos_in_record[i] = -1
     
     # Getter
@@ -148,7 +154,7 @@ class Input:
     # Keyboard listeners
     def __on_press(self, key):
         key_code = self.keyToInt(key)
-        if not self.__recording and key_code not in self.__hotkey and key_code not in self.__cancel_hotkey:
+        if not self.__recording and key_code not in self.__hotkeys[self.Hotkey.START] and key_code not in self.__hotkeys[self.Hotkey.CANCEL]:
             return
         
         if key_code in self.__pressed:
@@ -159,32 +165,44 @@ class Input:
             log.info("Pressed {0}".format(key))
             self.__record.append(self.__delay)
             self.__record.append(key_code)
-            if key_code in self.__hotkey:
+            if key_code in self.__hotkeys[self.Hotkey.STOP]:
                 log.debug("Stored hotkey position {0}".format(len(self.__record)-1))
                 self.__hotkey_pos_in_record[key_code] = len(self.__record)-1
             
         self.__pressed.add(key_code)
         
-        if not self.__recording and self.__pressed == self.__cancel_hotkey:
+        if not self.__recording and self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
             print("[END] Recording has been cancelled")
             return False
         
-        if self.__pressed == self.__hotkey:
-            if not self.__recording:
-                self.__recording = True
-                self.__pressed.clear()
-                self.__prev_mouse_pos = currentMousePosition()
-                print("[START] Recording input, press 'ctrl + shift' to end record")
-                self.__start = time.time()
-            else:
-                self.__recording = False
-                self.__removeHotkeyFromRecord()
-                print("[END] Recording has finished")
-                return False
+        # if self.__pressed == self.__hotkeys[self.Hotkey.START]:
+        #     if not self.__recording:
+        #         self.__recording = True
+        #         self.__pressed.clear()
+        #         self.__prev_mouse_pos = currentMousePosition()
+        #         print("[START] Recording input, press 'ctrl + shift' to end record")
+        #         self.__start = time.time()
+        #     else:
+        #         self.__recording = False
+        #         self.__removeHotkeyFromRecord()
+        #         print("[END] Recording has finished")
+        #         return False
+            
+        if not self.__recording and self.__pressed == self.__hotkeys[self.Hotkey.START]:
+            self.__recording = True
+            self.__pressed.clear()
+            self.__prev_mouse_pos = currentMousePosition()
+            print("[START] Recording input, press 'ctrl + alt' to end record")
+            self.__start = time.time()
+        elif self.__recording and self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
+            self.__recording = False
+            self.__removeHotkeyFromRecord()
+            print("[END] Recording has finished")
+            return False
     
     def __on_release(self, key):
         key_code = self.keyToInt(key)
-        if not self.__recording and key_code not in self.__hotkey:
+        if not self.__recording and key_code not in self.__hotkeys[self.Hotkey.START]:
             return
         
         if key_code not in self.__pressed:
@@ -200,7 +218,7 @@ class Input:
         
     def __on_press_for_play(self, key):
         key_code = self.keyToInt(key)
-        if key_code not in self.__hotkey and key_code not in self.__cancel_hotkey:
+        if key_code not in self.__hotkeys[self.Hotkey.START] and key_code not in self.__hotkeys[self.Hotkey.STOP]:
             return
         
         if key_code in self.__pressed:
@@ -208,11 +226,11 @@ class Input:
         
         self.__pressed.add(key_code)
         
-        if self.__pressed == self.__cancel_hotkey:
+        if self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
             print("[END] Playback has been cancelled")
             return False
         
-        if self.__pressed == self.__hotkey:
+        if self.__pressed == self.__hotkeys[self.Hotkey.START]:
             if not self.__playing:
                 self.__playing = True
                 self.__pressed.clear()
@@ -479,6 +497,9 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
+    # input = Input()
+    # input.test()
+    
     if not config_path.exists():
         writeConfig(config, config_path)
     else:
