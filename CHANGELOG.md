@@ -10,6 +10,7 @@ All notable changes on this project will be documented on this file.
 ### To be added
 - Customizable hotkeys
 - Pause hotkey for record and playback
+- Loop count
 
 ### Added
 - Set config values with `config set`.
