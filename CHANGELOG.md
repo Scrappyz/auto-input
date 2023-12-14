@@ -10,9 +10,9 @@ All notable changes on this project will be documented on this file.
 ### To be added
 - Customizable hotkeys
 - Pause hotkey for record and playback
-- Loop count
 
 ### Added
+- A loop counter to be able to loop a record a certain number of times.
 - Set config values with `config set`.
 - Get config values with `config get`.
 
