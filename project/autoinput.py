@@ -307,7 +307,7 @@ class Input:
     
         self.__pressed.clear()
                 
-    def play(self, loop=-1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
+    def play(self, loop=1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
         
@@ -323,7 +323,8 @@ class Input:
         
         length = len(self.__record)
         i = 0
-        while self.__state[self.State.PLAYING] and (i < length or loop):
+        loop_count = 0
+        while self.__state[self.State.PLAYING] and (loop < 0 or loop_count < loop):
             val = self.__record[i]
             if type(val) is int: # keyboard
                 key_code = self.intToKey(val)
@@ -363,8 +364,9 @@ class Input:
                     mouse_controller.position = (val[2][0], val[2][1])
                     log.info("Moved mouse to position ({0}, {1})".format(val[2][0], val[2][1]))
             i += 1
-            if i == length and loop:
+            if i >= length and (loop < 0 or loop_count < loop):
                 i = 0
+                loop_count += 1
         
         if not loop:
             self.__state[self.State.PLAYING] = False
@@ -523,7 +525,7 @@ def main():
     cmd_play = subparser.add_parser("play", help="play a record")
     cmd_play.add_argument("record", nargs='?', help="the record to play")
     cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
-    cmd_play.add_argument("--loop", nargs='?', type=int, default=-1, dest="loop", help="loop playback")
+    cmd_play.add_argument("--loop", nargs='?', type=int, default=1, const=-1, dest="loop", help="loop playback")
     cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
     cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
