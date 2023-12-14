@@ -307,7 +307,7 @@ class Input:
     
         self.__pressed.clear()
                 
-    def play(self, loop=False, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
+    def play(self, loop=-1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
         keyboard_controller = keyboard.Controller()
         mouse_controller = mouse.Controller()
         
@@ -523,7 +523,7 @@ def main():
     cmd_play = subparser.add_parser("play", help="play a record")
     cmd_play.add_argument("record", nargs='?', help="the record to play")
     cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
-    cmd_play.add_argument("--loop", action="store_true", dest="loop", help="loop playback")
+    cmd_play.add_argument("--loop", nargs='?', type=int, default=-1, dest="loop", help="loop playback")
     cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
     cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
