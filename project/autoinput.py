@@ -367,11 +367,12 @@ class Input:
             if i >= length and (loop < 0 or loop_count < loop):
                 i = 0
                 loop_count += 1
-        
-        if not loop:
+                
+        key_listener.stop()
+        if self.__state[self.State.PLAYING] == True:
             self.__state[self.State.PLAYING] = False
-            key_listener.stop() 
-            print("[END] Playback finished")      
+            print("[END] Playback finished")
+         
         self.__pressed.clear()
         
     def test(self):
