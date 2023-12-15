@@ -28,18 +28,41 @@ def keyToScanCode(k: str) -> int:
         return codes[0]
     return codes
 
+def hotkeyToScanCode(k: str) -> set:
+    codes = set()
+    separator = {' ', '+', ','}
+    exclude = {"right"}
+    temp = ""
+    length = len(k)
+    for i in range(length):
+        ch = k[i]
+        if ch in separator:
+            if temp:
+                if temp in exclude and ch == " ":
+                    temp += ch
+                    continue
+                codes.add(keyboard.key_to_scan_codes(temp)[0])
+                temp = ""
+            continue
+        temp += ch
+        
+    if temp:
+        codes.add(keyboard.key_to_scan_codes(temp)[0])
+    return codes
+
 class Hotkey:
     def __init__(self) -> None:
-        self.__hotkey = set()
+        self.__hotkey = ["", set()]
         self.__pressed = set()
         
     def setHotkey(self, h):
         if type(h) == str:
-            h = keyToScanCode(h)
-            for i in h:
-                self.__hotkey.add(i)
-        else:
-            
+            h = h.replace(" ", "")
+            self.__hotkey[0] = h
+            self.__hotkey[1] = hotkeyToScanCode(h)
+    
+    def getHotkey(self):
+        return self.__hotkey
 
 class Recorder:
     class InputType(IntEnum):
@@ -141,11 +164,9 @@ class Recorder:
         keyboard.unhook_all()
 
 def main():
-    print(str(keyToScanCode("right shift + right ctrl")))
-    input = Recorder()
-    input.record()
-    input.printRecord()
-    # input.test()
+    hotkey = Hotkey()
+    hotkey.setHotkey("ctrl+shift")
+    print(hotkey.getHotkey())
     
 if __name__ == "__main__":
     main()
