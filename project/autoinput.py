@@ -28,41 +28,51 @@ def keyToScanCode(k: str) -> int:
         return codes[0]
     return codes
 
-def hotkeyToScanCode(k: str) -> set:
-    codes = set()
-    separator = {' ', '+', ','}
-    exclude = {"right"}
-    temp = ""
-    length = len(k)
-    for i in range(length):
-        ch = k[i]
-        if ch in separator:
-            if temp:
-                if temp in exclude and ch == " ":
-                    temp += ch
-                    continue
-                codes.add(keyboard.key_to_scan_codes(temp)[0])
-                temp = ""
-            continue
-        temp += ch
-        
-    if temp:
-        codes.add(keyboard.key_to_scan_codes(temp)[0])
-    return codes
-
 class Hotkey:
-    def __init__(self) -> None:
+    def __init__(self, hotkey="") -> None:
         self.__hotkey = ["", set()]
-        self.__pressed = set()
+        self.setHotkey(hotkey)
         
     def setHotkey(self, h):
         if type(h) == str:
             h = h.replace(" ", "")
             self.__hotkey[0] = h
-            self.__hotkey[1] = hotkeyToScanCode(h)
+            self.__hotkey[1] = Hotkey.hotkeyToScanCode(h)
     
     def getHotkey(self):
         return self.__hotkey
+    
+    def getHotkeyName(self):
+        return self.__hotkey[0]
+    
+    def getHotkeyCombo(self):
+        return self.__hotkey[1]
+    
+    @staticmethod
+    def hotkeyToScanCode(k: str) -> set:
+        if not k:
+            return set()
+        
+        codes = set()
+        separator = {' ', '+', ','}
+        exclude = {"right"}
+        temp = ""
+        length = len(k)
+        for i in range(length):
+            ch = k[i]
+            if ch in separator:
+                if temp:
+                    if temp in exclude and ch == " ":
+                        temp += ch
+                        continue
+                    codes.add(keyboard.key_to_scan_codes(temp)[0])
+                    temp = ""
+                continue
+            temp += ch
+            
+        if temp:
+            codes.add(keyboard.key_to_scan_codes(temp)[0])
+        return codes
 
 class Recorder:
     class InputType(IntEnum):
@@ -80,8 +90,16 @@ class Recorder:
         RECORDING = 1
         PLAYING = 2
         
+    class Hotkeys(IntEnum):
+        START = 0
+        PAUSE = 1
+        STOP = 2
+        CANCEL = 3
+        
     def __init__(self) -> None:
         self.__record = []
+        self.__pressed = {}
+        self.__hotkeys = []
         
     def __mouseInput(self, event):
         self.__record.append(event)
@@ -164,8 +182,7 @@ class Recorder:
         keyboard.unhook_all()
 
 def main():
-    hotkey = Hotkey()
-    hotkey.setHotkey("ctrl+shift")
+    hotkey = Hotkey("")
     print(hotkey.getHotkey())
     
 if __name__ == "__main__":
