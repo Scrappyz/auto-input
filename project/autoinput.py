@@ -51,11 +51,12 @@ class Recorder:
         self.__record.append(event)
         
     def __keyboardInput(self, event):
-        input = [self.InputType.KEY, event.scan_code]
+        input = [self.InputType.KEY, event.name, event.scan_code]
         if event.event_type == "down":
             input.append(self.EventType.PRESS)
         else:
             input.append(self.EventType.RELEASE)
+        input.append(event.is_keypad)
         input.append(event.time)
         self.__record.append(input)
         
@@ -64,7 +65,7 @@ class Recorder:
         keyboard
         
     def record(self):
-        keyboard.hook()
+        # keyboard.hook()
         # mouse.hook(self.__mouseInput)
         keyboard.hook(self.__keyboardInput)
         
@@ -128,9 +129,9 @@ class Recorder:
 
 def main():
     print(str(keyToScanCode("right shift + right ctrl")))
-    # input = Recorder()
-    # input.record()
-    # input.printRecord()
+    input = Recorder()
+    input.record()
+    input.printRecord()
     # input.test()
     
 if __name__ == "__main__":
@@ -140,6 +141,8 @@ if __name__ == "__main__":
 # use lists with IntEnum rather than dict in record
 
 # keyboard
-# scan code
-# event type
-# time
+# [1] name
+# [2] scan code
+# [3] event type
+# [4] is keypad
+# [5] time
