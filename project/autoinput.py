@@ -98,8 +98,8 @@ class Recorder:
         
     def __init__(self) -> None:
         self.__record = []
-        self.__pressed = {}
-        self.__hotkeys = []
+        self.__pressed = set()
+        self.__hotkeys = [Hotkey("ctrl+shift"), Hotkey(""), Hotkey("ctrl+alt"), Hotkey("ctrl+z")]
         
     def __mouseInput(self, event):
         self.__record.append(event)
@@ -114,16 +114,40 @@ class Recorder:
         input.append(event.time)
         self.__record.append(input)
         
-    def __ready(self) -> set:
-        print("[READY] Press hotkey to go")
-        keyboard
+    def ready(self, message) -> set:
+        print("[READY] " + message)
+        start = self.__hotkeys[self.Hotkeys.START].getHotkeyCombo()
+        cancel = self.__hotkeys[self.Hotkeys.CANCEL].getHotkeyCombo()
+        k = ""
+        while self.__pressed != start and self.__pressed != cancel:
+            k = keyboard.key_to_scan_codes(keyboard.read_key())[0]
+            self.__evaluatePress(k)
+
+        hotkey_used = -1
+        if self.__pressed == start:
+            hotkey_used = self.Hotkeys.START
+        else:
+            hotkey_used = self.Hotkeys.CANCEL
+        self.__pressed.clear()
+        
+        return hotkey_used
         
     def record(self):
         # keyboard.hook()
         # mouse.hook(self.__mouseInput)
+        start_hotkey = self.__hotkeys[self.Hotkeys.START].getHotkeyName()
+        cancel_hotkey = self.__hotkeys[self.Hotkeys.CANCEL].getHotkeyName()
+        choice = self.ready(message="Press '{0}' to start recording, press '{1}' to cancel".format(start_hotkey, cancel_hotkey))
+        
+        if choice == self.Hotkeys.CANCEL:
+            print("[END] Recording cancelled")
+            return
+
+        print("[START] Recording input, press '{0}' to end record".format(self.__hotkeys[self.Hotkeys.STOP].getHotkeyName()))
+        
         keyboard.hook(self.__keyboardInput)
         
-        keyboard.wait("ctrl + shift")
+        keyboard.wait("ctrl + alt")
         
         # mouse.unhook_all()
         keyboard.unhook_all()
@@ -132,6 +156,11 @@ class Recorder:
         length = len(self.__record)
         i = 0
         
+    def __evaluatePress(self, k):
+        if k not in self.__pressed:
+            self.__pressed.add(k)
+        else:
+            self.__pressed.remove(k)
         
     def printRecord(self):
         for i in self.__record:
@@ -182,8 +211,8 @@ class Recorder:
         keyboard.unhook_all()
 
 def main():
-    hotkey = Hotkey("")
-    print(hotkey.getHotkey())
+    input = Recorder()
+    input.record()
     
 if __name__ == "__main__":
     main()
