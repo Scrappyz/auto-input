@@ -28,6 +28,19 @@ def keyToScanCode(k: str) -> int:
         return codes[0]
     return codes
 
+class Hotkey:
+    def __init__(self) -> None:
+        self.__hotkey = set()
+        self.__pressed = set()
+        
+    def setHotkey(self, h):
+        if type(h) == str:
+            h = keyToScanCode(h)
+            for i in h:
+                self.__hotkey.add(i)
+        else:
+            
+
 class Recorder:
     class InputType(IntEnum):
         BUTTON = 0
