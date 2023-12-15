@@ -1,19 +1,8 @@
 import mouse, keyboard
 import json
-import threading
 import time
 
-# def recordInput():
-#     keyboard_input = threading.Thread(target=keyboard.record, args=("ctrl + shift"))
-#     mouse_input = threading.Thread(target=mouse.record, args=("ctrl + shift"))
-    
-#     keyboard_input.start()
-#     mouse_input.start()
-    
-#     keyboard_input.join()
-#     mouse_input.join()
-    
-class Input:
+class Recorder:
     def __init__(self) -> None:
         self.__record = []
         
@@ -22,7 +11,7 @@ class Input:
         
     def __keyboardInput(self, event):
         self.__record.append(event)
-    
+        
     def record(self):
         mouse.hook(self.__mouseInput)
         keyboard.hook(self.__keyboardInput)
@@ -31,15 +20,15 @@ class Input:
         
         mouse.unhook_all()
         keyboard.unhook_all()
-        
-    def printRecord(self):
-        for i in self.__record:
-            print(type(i))
+           
+def _test():
+    print("wassup")
 
 def main():
-    input = Input()
-    input.record()
-    input.printRecord()
+    record()
     
 if __name__ == "__main__":
     main()
+    
+# Notes
+# use lists with IntEnum rather than dict in record
