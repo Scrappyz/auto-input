@@ -37,7 +37,7 @@ class Input:
     def __init__(self):
         self.__record = []
         self.__state = [False, False, False]
-        self.__hotkeys = [{162, 160}, {}, {162, 164}, {162, 90}]
+        self.__hotkeys = [{162, 160}, {}, {162, 160}, {162, 90}]
         self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
         
         # Helper variables
@@ -183,7 +183,7 @@ class Input:
             self.__state[self.State.RECORDING] = True
             self.__pressed.clear()
             self.__prev_mouse_pos = currentMousePosition()
-            print("[START] Recording input, press 'ctrl + alt' to end record")
+            print("[START] Recording input, press 'ctrl + shift' to end record")
             self.__start = time.time()
         elif self.__state[self.State.RECORDING] and self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
             self.__state[self.State.RECORDING] = False
@@ -224,7 +224,7 @@ class Input:
         if not self.__state[self.State.PLAYING] and self.__pressed == self.__hotkeys[self.Hotkey.START]:
             self.__state[self.State.PLAYING] = True
             self.__pressed.clear()
-            print("[START] Playing record, press `ctrl + alt` to end playback")
+            print("[START] Playing record, press `ctrl + shift` to end playback")
             return False
         elif self.__state[self.State.PLAYING] and self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
             self.__state[self.State.PLAYING] = False

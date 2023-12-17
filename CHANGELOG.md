@@ -11,6 +11,7 @@ All notable changes on this project will be documented on this file.
 - Customizable hotkeys
 - Pause hotkey for record and playback
 
+## [0.1.2-alpha] - 2023-12-17
 ### Added
 - A loop counter to be able to loop a record a certain number of times.
 - Set config values with `config set`.
