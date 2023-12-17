@@ -90,6 +90,25 @@ class Hotkey:
             codes = []
             for i in keys:
                 codes.append(keyboard.key_to_scan_codes(i)[0])
+            
+            if len(codes) == 1:
+                return codes[0]
+            return codes
+        
+    @staticmethod
+    def hotkeyToCombo(keys) -> set:
+        if type(keys) == str:
+            keys = Hotkey.splitKeys(keys)
+            
+        if type(keys) == list:
+            combo = set()
+            for i in keys:
+                if type(i) == str:
+                    combo.add(keyboard.key_to_scan_codes(i)[0])
+                elif type(i) == int:
+                    combo.add(i)
+            
+            return combo
 
 class Recorder:
     class InputType(IntEnum):
@@ -232,6 +251,8 @@ def main():
     # input.record()
     # hotkey = Hotkey("a+b")
     # hotkey.press()
+    print(Hotkey.hotkeyToCode("ctrl + shift"))
+    print(Hotkey.hotkeyToCode(["ctrl", "shift"]))
     Hotkey.splitKeys("ctrl + right shift")
     
 if __name__ == "__main__":
