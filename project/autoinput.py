@@ -63,20 +63,39 @@ class Hotkey:
         
         return hotkey
     
-    def getHotkeyCombo(self):
-        return self.__hotkey[1]
+    def getHotkeyCode(self):
+        return self.__hotkey_code
     
-    def press(self):
-        for i in self.__hotkey_code:
+    def getHotkeyCombo(self):
+        return self.__hotkey_combo
+    
+    @staticmethod
+    def press(hotkey):
+        if type(hotkey) == str:
+            hotkey = Hotkey.hotkeyToCode(hotkey)
+        elif type(hotkey) == Hotkey:
+            hotkey = hotkey.getHotkeyCode()
+            
+        for i in hotkey:
             if i not in Hotkey.__pressed:
                 keyboard.press(i)
                 Hotkey.__pressed.add(i)
-                
-    def release(self):
-        for i in self.__hotkey_code:
+      
+    @staticmethod          
+    def release(hotkey):
+        if type(hotkey) == str:
+            hotkey = Hotkey.hotkeyToCode(hotkey)
+        elif type(hotkey) == Hotkey:
+            hotkey = hotkey.getHotkeyCode()
+            
+        for i in hotkey:
             if i in Hotkey.__pressed:
                 keyboard.release(i)
                 Hotkey.__pressed.remove(i)
+                
+    # @staticmethod
+    # def wait(hotkeys):
+        
             
     @staticmethod
     def splitKeys(k: str) -> list:
@@ -277,9 +296,9 @@ def main():
     # input.record()
     hotkey = Hotkey("q+p+7+8")
     time.sleep(2)
-    hotkey.press()
+    Hotkey.press("7+8")
     time.sleep(3)
-    hotkey.release()
+    Hotkey.release(hotkey)
     
 if __name__ == "__main__":
     main()
