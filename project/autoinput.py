@@ -37,23 +37,46 @@ class Hotkey:
         self.__hotkey_combo = set()
         self.setHotkey(hotkey)
         
-    def setHotkey(self, h):
-        if type(h) == str:
-            self.__hotkey = h
-            self.__hotkey_code = Hotkey.hotkeyToScanCode(h)
+    def setHotkey(self, hotkey):
+        if type(hotkey) == str:
+            self.__hotkey = Hotkey.splitKeys(hotkey)
+        elif type(hotkey) == list:
+            self.__hotkey = hotkey
+            
+        self.__hotkey_code = Hotkey.hotkeyToCode(self.__hotkey)
+        if type(self.__hotkey_code) == int:
+            self.__hotkey_code = [self.__hotkey_code]
+            
+        self.__hotkey_combo = Hotkey.hotkeyToCombo(self.__hotkey_code)
     
     def getHotkey(self):
         return self.__hotkey
     
     def getHotkeyName(self):
-        return self.__hotkey[0]
+        hotkey = ""
+        length = len(self.__hotkey)
+        for i in range(length):
+            key = self.__hotkey[i]
+            hotkey += key
+            if i < length-1:
+                hotkey += " + "
+        
+        return hotkey
     
     def getHotkeyCombo(self):
         return self.__hotkey[1]
     
     def press(self):
-        for i in self.__hotkey[1]:
-            keyboard.press(i)
+        for i in self.__hotkey_code:
+            if i not in Hotkey.__pressed:
+                keyboard.press(i)
+                Hotkey.__pressed.add(i)
+                
+    def release(self):
+        for i in self.__hotkey_code:
+            if i in Hotkey.__pressed:
+                keyboard.release(i)
+                Hotkey.__pressed.remove(i)
             
     @staticmethod
     def splitKeys(k: str) -> list:
@@ -82,15 +105,18 @@ class Hotkey:
         return keys
     
     @staticmethod
-    def hotkeyToCode(keys) -> set:
+    def hotkeyToCode(keys) -> list:
         if type(keys) == str:
             keys = Hotkey.splitKeys(keys)
             
         if type(keys) == list:
             codes = []
             for i in keys:
-                codes.append(keyboard.key_to_scan_codes(i)[0])
-            
+                if type(i) == int:
+                    codes.append(i)
+                else:
+                    codes.append(keyboard.key_to_scan_codes(i)[0])
+
             if len(codes) == 1:
                 return codes[0]
             return codes
@@ -249,11 +275,11 @@ class Recorder:
 def main():
     # input = Recorder()
     # input.record()
-    # hotkey = Hotkey("a+b")
-    # hotkey.press()
-    print(Hotkey.hotkeyToCode("ctrl + shift"))
-    print(Hotkey.hotkeyToCode(["ctrl", "shift"]))
-    Hotkey.splitKeys("ctrl + right shift")
+    hotkey = Hotkey("q+p+7+8")
+    time.sleep(2)
+    hotkey.press()
+    time.sleep(3)
+    hotkey.release()
     
 if __name__ == "__main__":
     main()
