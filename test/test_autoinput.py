@@ -6,12 +6,12 @@ from autoinput import *
 
 class TestAutoInput(unittest.TestCase):    
     def test_keyToScanCode(self):
-        self.assertEqual(keyToScanCode("ctrl+shift"), [29,42])
-        self.assertEqual(keyToScanCode("ctrl + shift"), [29,42])
-        self.assertEqual(keyToScanCode("shift"), 42)
-        self.assertEqual(keyToScanCode("right shift"), 54)
-        self.assertEqual(keyToScanCode("ctrl+right shift"), [29, 54])
-        self.assertEqual(keyToScanCode("right shift + right shift"), [54, 54])
+        self.assertEqual(Hotkey.splitKeys("shift"), ["shift"])
+        self.assertEqual(Hotkey.splitKeys("ctrl+shift"), ["ctrl", "shift"])
+        self.assertEqual(Hotkey.splitKeys("ctrl + shift"), ["ctrl", "shift"])
+        self.assertEqual(Hotkey.splitKeys("ctrl   +   shift"), ["ctrl", "shift"])
+        self.assertEqual(Hotkey.splitKeys("ctrl + right shift"), ["ctrl", "right shift"])
+        self.assertEqual(Hotkey.splitKeys("right ctrl + right shift"), ["right ctrl", "right shift"])
         
 if __name__ == "__main__":
     unittest.main()

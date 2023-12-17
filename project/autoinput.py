@@ -29,15 +29,18 @@ def keyToScanCode(k: str) -> int:
     return codes
 
 class Hotkey:
+    __pressed = set()
+    
     def __init__(self, hotkey="") -> None:
-        self.__hotkey = ["", set()]
+        self.__hotkey = []
+        self.__hotkey_code = []
+        self.__hotkey_combo = set()
         self.setHotkey(hotkey)
         
     def setHotkey(self, h):
         if type(h) == str:
-            h = h.replace(" ", "")
-            self.__hotkey[0] = h
-            self.__hotkey[1] = Hotkey.hotkeyToScanCode(h)
+            self.__hotkey = h
+            self.__hotkey_code = Hotkey.hotkeyToScanCode(h)
     
     def getHotkey(self):
         return self.__hotkey
@@ -48,31 +51,66 @@ class Hotkey:
     def getHotkeyCombo(self):
         return self.__hotkey[1]
     
-    @staticmethod
-    def hotkeyToScanCode(k: str) -> set:
-        if not k:
-            return set()
-        
-        codes = set()
-        separator = {' ', '+', ','}
-        exclude = {"right"}
-        temp = ""
-        length = len(k)
-        for i in range(length):
-            ch = k[i]
-            if ch in separator:
-                if temp:
-                    if temp in exclude and ch == " ":
-                        temp += ch
-                        continue
-                    codes.add(keyboard.key_to_scan_codes(temp)[0])
-                    temp = ""
-                continue
-            temp += ch
+    def press(self):
+        for i in self.__hotkey[1]:
+            keyboard.press(i)
             
-        if temp:
-            codes.add(keyboard.key_to_scan_codes(temp)[0])
-        return codes
+    @staticmethod
+    def splitKeys(k: str) -> list:
+        exclude = {'+', ' '}
+        direction = {"right"}
+        key = ""
+        keys = []
+        for i in range(len(k)):
+            ch = k[i]
+            if ch not in exclude:
+                key += ch
+                continue
+            
+            if ch == ' ':
+                if key in direction:
+                    key += ' '
+                continue
+            
+            if ch == '+' and key:
+                keys.append(key)
+                key = ""
+                
+        if key:
+            keys.append(key)
+        
+        return keys
+    
+    @staticmethod
+    def hotkeyToCode(keys) -> set:
+        if type(keys) == str:
+            keys = Hotkey.splitKeys(keys)
+            
+        if type(keys) == list:
+            codes = []
+            for i in keys:
+                codes.append(keyboard.key_to_scan_codes(i)[0])
+        
+        # codes = set()
+        # separator = {' ', '+', ','}
+        # exclude = {"right"}
+        # temp = ""
+        # length = len(k)
+        # for i in range(length):
+        #     ch = k[i]
+        #     if ch in separator:
+        #         if temp:
+        #             if temp in exclude and ch == " ":
+        #                 temp += ch
+        #                 continue
+        #             codes.add(keyboard.key_to_scan_codes(temp)[0])
+        #             temp = ""
+        #         continue
+        #     temp += ch
+            
+        # if temp:
+        #     codes.add(keyboard.key_to_scan_codes(temp)[0])
+        # return codes
 
 class Recorder:
     class InputType(IntEnum):
@@ -211,8 +249,11 @@ class Recorder:
         keyboard.unhook_all()
 
 def main():
-    input = Recorder()
-    input.record()
+    # input = Recorder()
+    # input.record()
+    # hotkey = Hotkey("a+b")
+    # hotkey.press()
+    Hotkey.splitKeys("ctrl + right shift")
     
 if __name__ == "__main__":
     main()
