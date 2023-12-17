@@ -64,12 +64,12 @@ class Hotkey:
         for i in range(len(k)):
             ch = k[i]
             if ch not in exclude:
+                if key in direction:
+                    key += ' '
                 key += ch
                 continue
             
             if ch == ' ':
-                if key in direction:
-                    key += ' '
                 continue
             
             if ch == '+' and key:
@@ -90,27 +90,6 @@ class Hotkey:
             codes = []
             for i in keys:
                 codes.append(keyboard.key_to_scan_codes(i)[0])
-        
-        # codes = set()
-        # separator = {' ', '+', ','}
-        # exclude = {"right"}
-        # temp = ""
-        # length = len(k)
-        # for i in range(length):
-        #     ch = k[i]
-        #     if ch in separator:
-        #         if temp:
-        #             if temp in exclude and ch == " ":
-        #                 temp += ch
-        #                 continue
-        #             codes.add(keyboard.key_to_scan_codes(temp)[0])
-        #             temp = ""
-        #         continue
-        #     temp += ch
-            
-        # if temp:
-        #     codes.add(keyboard.key_to_scan_codes(temp)[0])
-        # return codes
 
 class Recorder:
     class InputType(IntEnum):
