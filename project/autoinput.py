@@ -210,40 +210,23 @@ class Recorder:
         input.append(event.time)
         self.__record.append(input)
         
-    def ready(self, message) -> set:
-        print("[READY] " + message)
-        start = self.__hotkeys[self.Hotkeys.START].getHotkeyCombo()
-        cancel = self.__hotkeys[self.Hotkeys.CANCEL].getHotkeyCombo()
-        k = ""
-        while self.__pressed != start and self.__pressed != cancel:
-            k = keyboard.key_to_scan_codes(keyboard.read_key())[0]
-            self.__evaluatePress(k)
-
-        hotkey_used = -1
-        if self.__pressed == start:
-            hotkey_used = self.Hotkeys.START
-        else:
-            hotkey_used = self.Hotkeys.CANCEL
-        self.__pressed.clear()
-        
-        return hotkey_used
-        
     def record(self):
-        # keyboard.hook()
-        # mouse.hook(self.__mouseInput)
         start_hotkey = self.__hotkeys[self.Hotkeys.START].getHotkeyName()
         cancel_hotkey = self.__hotkeys[self.Hotkeys.CANCEL].getHotkeyName()
-        choice = self.ready(message="Press '{0}' to start recording, press '{1}' to cancel".format(start_hotkey, cancel_hotkey))
+        print("[READY] Press '{0}' to start recording or press '{1}' to cancel".format(start_hotkey, cancel_hotkey))
+        choice = Hotkey.wait([start_hotkey, cancel_hotkey])
         
-        if choice == self.Hotkeys.CANCEL:
+        if choice == cancel_hotkey:
             print("[END] Recording cancelled")
             return
 
-        print("[START] Recording input, press '{0}' to end record".format(self.__hotkeys[self.Hotkeys.STOP].getHotkeyName()))
+        stop_hotkey = self.__hotkeys[self.Hotkeys.STOP].getHotkeyName()
+        print("[START] Recording input, press '{0}' to end record".format(stop_hotkey))
         
         keyboard.hook(self.__keyboardInput)
         
-        keyboard.wait("ctrl + alt")
+        Hotkey.wait(stop_hotkey)
+        print("[END] Recording stopped")
         
         # mouse.unhook_all()
         keyboard.unhook_all()
@@ -307,14 +290,8 @@ class Recorder:
         keyboard.unhook_all()
 
 def main():
-    # input = Recorder()
-    # input.record()
-    print(Hotkey.wait("ctrl + shift"))
-    # hotkey = Hotkey("q+p+7+8")
-    # time.sleep(2)
-    # Hotkey.press("7+8")
-    # time.sleep(3)
-    # Hotkey.release(hotkey)
+    input = Recorder()
+    input.record()
     
 if __name__ == "__main__":
     main()
