@@ -93,9 +93,24 @@ class Hotkey:
                 keyboard.release(i)
                 Hotkey.__pressed.remove(i)
                 
-    # @staticmethod
-    # def wait(hotkeys):
+    @staticmethod
+    def wait(hotkeys):
+        combos = {}
+        if type(hotkeys) == list:
+            for i in hotkeys:    
+                combos[frozenset(Hotkey.hotkeyToCombo(i))] = i
+        else:
+            combos[frozenset(Hotkey.hotkeyToCombo(hotkeys))] = hotkeys
         
+        k = ""
+        while frozenset(Hotkey.__pressed) not in combos.keys(): 
+            k = keyboard.key_to_scan_codes(keyboard.read_key())[0]
+            if k not in Hotkey.__pressed:
+                Hotkey.__pressed.add(k)
+            else:
+                Hotkey.__pressed.remove(k)
+
+        return combos[frozenset(Hotkey.__pressed)]
             
     @staticmethod
     def splitKeys(k: str) -> list:
@@ -294,11 +309,12 @@ class Recorder:
 def main():
     # input = Recorder()
     # input.record()
-    hotkey = Hotkey("q+p+7+8")
-    time.sleep(2)
-    Hotkey.press("7+8")
-    time.sleep(3)
-    Hotkey.release(hotkey)
+    print(Hotkey.wait("ctrl + shift"))
+    # hotkey = Hotkey("q+p+7+8")
+    # time.sleep(2)
+    # Hotkey.press("7+8")
+    # time.sleep(3)
+    # Hotkey.release(hotkey)
     
 if __name__ == "__main__":
     main()
