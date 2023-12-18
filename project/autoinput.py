@@ -91,6 +91,7 @@ class Hotkey:
                 if type(i) == int:
                     codes.append(i)
                     continue
+                print(type(i))
                 try:
                     key_code = i.vk
                 except AttributeError:
@@ -144,7 +145,7 @@ class Recorder:
         RECORDING = 1
         PLAYING = 2
     
-    def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="", stop_hotkey="ctrl+alt", cancel_hotkey="ctrl+z"):
+    def __init__(self, start_hotkey="ctrl_l+shift_l", pause_hotkey="", stop_hotkey="ctrl_l+shift_l", cancel_hotkey="ctrl_l+z"):
         self.__record = []
         self.__state = [False, False, False]
         self.__hotkeys = [Hotkey(start_hotkey), Hotkey(pause_hotkey), Hotkey(stop_hotkey), Hotkey(cancel_hotkey)]
@@ -163,7 +164,7 @@ class Recorder:
             
     def testHotkey(self):
         for i in self.__hotkeys:
-            print("{0}".format(i.getHotkeyName()))
+            print("{0} | {1} | {2}".format(i.getHotkeyName(), i.getHotkeyCode(), i.getHotkeyCombo()))
     
     # Getter
     def getRecord(self) -> list:
@@ -272,7 +273,16 @@ class Recorder:
     # Keyboard listeners
     def __on_press(self, key):
         key_code = self.keyToInt(key)
-        if not self.__state[self.State.RECORDING] and key_code not in self.__hotkeys[self.Hotkey.START] and key_code not in self.__hotkeys[self.Hotkey.CANCEL]:
+        start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
+        stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
+        cancel_hotkey = self.__hotkeys[self.Hotkey.CANCEL].getHotkeyCombo()
+        
+        print(str(key_code))
+        print(start_hotkey)
+        print(stop_hotkey)
+        print(cancel_hotkey)
+        print("======")
+        if not self.__state[self.State.RECORDING] and key_code not in start_hotkey and key_code not in cancel_hotkey:
             return
         
         if key_code in self.__pressed:
@@ -283,23 +293,23 @@ class Recorder:
             log.info("Pressed {0}".format(key))
             self.__record.append(self.__delay)
             self.__record.append(key_code)
-            if key_code in self.__hotkeys[self.Hotkey.STOP]:
+            if key_code in stop_hotkey:
                 log.debug("Stored hotkey position {0}".format(len(self.__record)-1))
                 self.__hotkey_pos_in_record[key_code] = len(self.__record)-1
             
         self.__pressed.add(key_code)
         
-        if not self.__state[self.State.RECORDING] and self.__pressed == self.__hotkeys[self.Hotkey.CANCEL]:
+        if not self.__state[self.State.RECORDING] and self.__pressed == cancel_hotkey:
             print("[END] Recording has been cancelled")
             return False
             
-        if not self.__state[self.State.RECORDING] and self.__pressed == self.__hotkeys[self.Hotkey.START]:
+        if not self.__state[self.State.RECORDING] and self.__pressed == start_hotkey:
             self.__state[self.State.RECORDING] = True
             self.__pressed.clear()
             self.__prev_mouse_pos = currentMousePosition()
             print("[START] Recording input, press 'ctrl + shift' to end record")
             self.__start = time.time()
-        elif self.__state[self.State.RECORDING] and self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
+        elif self.__state[self.State.RECORDING] and self.__pressed == stop_hotkey:
             self.__state[self.State.RECORDING] = False
             self.__removeHotkeyFromRecord()
             print("[END] Recording has finished")
@@ -307,7 +317,9 @@ class Recorder:
     
     def __on_release(self, key):
         key_code = self.keyToInt(key)
-        if not self.__state[self.State.RECORDING] and key_code not in self.__hotkeys[self.Hotkey.START]:
+        start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
+        
+        if not self.__state[self.State.RECORDING] and key_code not in start_hotkey:
             return
         
         if key_code not in self.__pressed:
@@ -323,7 +335,11 @@ class Recorder:
         
     def __on_press_for_play(self, key):
         key_code = self.keyToInt(key)
-        if key_code not in self.__hotkeys[self.Hotkey.START] and key_code not in self.__hotkeys[self.Hotkey.STOP] and key_code not in self.__hotkeys[self.Hotkey.CANCEL]:
+        start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
+        stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
+        cancel_hotkey = self.__hotkeys[self.Hotkey.CANCEL].getHotkeyCombo()
+        
+        if key_code not in start_hotkey and key_code not in stop_hotkey and key_code not in cancel_hotkey:
             return
         
         if key_code in self.__pressed:
@@ -331,16 +347,16 @@ class Recorder:
         
         self.__pressed.add(key_code)
         
-        if not self.__state[self.State.PLAYING] and self.__pressed == self.__hotkeys[self.Hotkey.CANCEL]:
+        if not self.__state[self.State.PLAYING] and self.__pressed == cancel_hotkey:
             print("[END] Playback has been cancelled")
             return False
         
-        if not self.__state[self.State.PLAYING] and self.__pressed == self.__hotkeys[self.Hotkey.START]:
+        if not self.__state[self.State.PLAYING] and self.__pressed == start_hotkey:
             self.__state[self.State.PLAYING] = True
             self.__pressed.clear()
             print("[START] Playing record, press `ctrl + shift` to end playback")
             return False
-        elif self.__state[self.State.PLAYING] and self.__pressed == self.__hotkeys[self.Hotkey.STOP]:
+        elif self.__state[self.State.PLAYING] and self.__pressed == stop_hotkey:
             self.__state[self.State.PLAYING] = False
             print("[END] Playback stopped")
             return False
@@ -414,7 +430,7 @@ class Recorder:
         self.__record.clear()
         self.__input_option = option
         
-        print("[READY] Press 'ctrl + shift' to start recording or press 'ctrl + z' to cancel")
+        print("[READY] Press '{0}' to start recording or press '{1}' to cancel".format(self.__hotkeys[self.Hotkey.START].getHotkeyName(), self.__hotkeys[self.Hotkey.CANCEL].getHotkeyName()))
         with mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
             with keyboard.Listener(on_press=self.__on_press, on_release=self.__on_release) as listener:
                 listener.join() 
@@ -604,8 +620,7 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    recorder = Recorder(start_hotkey="ctrl + shift", stop_hotkey="ctrl + shift", cancel_hotkey="ctrl_l + z")
-    recorder.testHotkey()
+    print(Hotkey.hotkeyToCode("ctrl_l+z"))
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
@@ -656,7 +671,7 @@ def main():
     # cmd_config_get = config_subparser.add_parser("get", help="get config values")
     # cmd_config_get.add_argument("config", nargs='*', type=str, help="the config values to get")
     
-    # args = parser.parse_args()
+    # args = parser.parse_args("record add test -mk".split(" "))
     # if args.command1 == "record":
     #     if args.command2 == "add":
     #         addRecord(args, record_dir)
