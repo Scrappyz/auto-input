@@ -2,31 +2,7 @@ import mouse, keyboard
 import json
 import time
 from enum import IntEnum
-
-def keyToScanCode(k: str) -> int:
-    codes = []
-    separator = {' ', '+', ','}
-    exclude = {"right"}
-    temp = ""
-    length = len(k)
-    for i in range(length):
-        ch = k[i]
-        if ch in separator:
-            if temp:
-                if temp in exclude and ch == " ":
-                    temp += ch
-                    continue
-                codes.append(keyboard.key_to_scan_codes(temp)[0])
-                temp = ""
-            continue
-        temp += ch
-        
-    if temp:
-        codes.append(keyboard.key_to_scan_codes(temp)[0])
-    
-    if len(codes) == 1:
-        return codes[0]
-    return codes
+from pathlib import Path
 
 class Hotkey:
     __pressed = set()
@@ -206,7 +182,7 @@ class Recorder:
         STOP = 2
         CANCEL = 3
         
-    def __init__(self) -> None:
+    def __init__(self, start_hotkey="ctrl + shift", pause_hotkey="", stop_hotkey="ctrl + alt", cancel_hotkey="ctrl + z") -> None:
         self.__record = []
         self.__pressed = set()
         self.__hotkeys = [Hotkey("ctrl+shift"), Hotkey(""), Hotkey("ctrl+alt"), Hotkey("ctrl+z")]
@@ -219,6 +195,7 @@ class Recorder:
     def __stop(self, state):
         if not self.__states[state]:
             self.__states[state] = False
+        self.__hotkeys = [Hotkey(start_hotkey), Hotkey(pause_hotkey), Hotkey(stop_hotkey), Hotkey(cancel_hotkey)]
         
     def __mouseInput(self, event):
         self.__record.append(event)
@@ -267,11 +244,10 @@ class Recorder:
         length = len(self.__record)
         i = 0
         
-    def __evaluatePress(self, k):
-        if k not in self.__pressed:
-            self.__pressed.add(k)
-        else:
-            self.__pressed.remove(k)
+    def saveRecordToJson(self, record_name):
+        data = json.dumps(self.__record)
+        with open(record_name, 'w') as file:
+            file.write(data)
         
     def printRecord(self):
         for i in self.__record:
@@ -322,8 +298,11 @@ class Recorder:
         keyboard.unhook_all()
 
 def main():
+    record_dir = Path(__file__).parent.parent.joinpath("records")
     input = Recorder()
     input.record()
+    input.printRecord()
+    input.saveRecordToJson(Path.joinpath(record_dir, "test.json"))
     
 if __name__ == "__main__":
     main()
