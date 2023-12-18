@@ -24,6 +24,9 @@ class TestAutoInput(unittest.TestCase):
         self.assertEqual(Hotkey.hotkeyToCode("ctrl + shift"), [29, 42])
         self.assertEqual(Hotkey.hotkeyToCode("ctrl"), 29)
         self.assertEqual(Hotkey.hotkeyToCode([29, 42]), [29, 42])
+        self.assertEqual(Hotkey.hotkeyToCode(Hotkey("ctrl + shift")), [29, 42])
+        self.assertEqual(Hotkey.hotkeyToCode(Hotkey("ctrl")), 29)
+        self.assertEqual(Hotkey.hotkeyToCode(Hotkey("ctrl"), True), [29])
         
     def test_hotkeyToCombo(self):
         self.assertEqual(Hotkey.hotkeyToCombo("ctrl + shift"), {29, 42})

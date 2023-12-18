@@ -71,10 +71,7 @@ class Hotkey:
     
     @staticmethod
     def press(hotkey):
-        if type(hotkey) == str:
-            hotkey = Hotkey.hotkeyToCode(hotkey)
-        elif type(hotkey) == Hotkey:
-            hotkey = hotkey.getHotkeyCode()
+        hotkey = Hotkey.hotkeyToCode(hotkey, True)
             
         for i in hotkey:
             if i not in Hotkey.__pressed:
@@ -83,15 +80,20 @@ class Hotkey:
       
     @staticmethod          
     def release(hotkey):
-        if type(hotkey) == str:
-            hotkey = Hotkey.hotkeyToCode(hotkey)
-        elif type(hotkey) == Hotkey:
-            hotkey = hotkey.getHotkeyCode()
+        hotkey = Hotkey.hotkeyToCode(hotkey, True)
             
         for i in hotkey:
             if i in Hotkey.__pressed:
                 keyboard.release(i)
                 Hotkey.__pressed.remove(i)
+                
+    @staticmethod
+    def tap(hotkey):
+        hotkey = Hotkey.hotkeyToCode(hotkey, True)
+        
+        for i in hotkey:
+            keyboard.press(i)
+            keyboard.release(i)
                 
     @staticmethod
     def wait(hotkeys):
@@ -139,7 +141,13 @@ class Hotkey:
         return keys
     
     @staticmethod
-    def hotkeyToCode(keys) -> list:
+    def hotkeyToCode(keys, force_list=False) -> list:
+        if type(keys) == Hotkey:
+            keys = keys.getHotkeyCode()
+            if not force_list and len(keys) == 1:
+                return keys[0]
+            return keys
+        
         if type(keys) == str:
             keys = Hotkey.splitKeys(keys)
             
@@ -151,7 +159,7 @@ class Hotkey:
                 else:
                     codes.append(keyboard.key_to_scan_codes(i)[0])
 
-            if len(codes) == 1:
+            if not force_list and len(codes) == 1:
                 return codes[0]
             return codes
         
@@ -290,8 +298,12 @@ class Recorder:
         keyboard.unhook_all()
 
 def main():
-    input = Recorder()
-    input.record()
+    # input = Recorder()
+    # input.record()
+    time.sleep(2)
+    Hotkey.press("shift")
+    Hotkey.tap("f+u+c+k")
+    Hotkey.release("shift")
     
 if __name__ == "__main__":
     main()
