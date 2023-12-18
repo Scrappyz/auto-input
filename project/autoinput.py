@@ -13,10 +13,27 @@ logging.basicConfig(format="[%(levelname)s] %(message)s")
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
+def press(key):
+    if type(key) == str:
+        key = Hotkey.parse(key)
+    elif type(key) == Hotkey:
+        key = key.getHotkeyCode()
+        
+    kb = keyboard.Controller()
+    for i in key:
+        kb.press(i)
+        
+def release(key):
+    if type(key) == str:
+        key = Hotkey.parse(key)
+    
+    kb = keyboard.Controller()
+    for i in key:
+        kb.release(i)
+
 class Hotkey:
     def __init__(self, hotkey) -> None:
         self.__hotkey = []
-        self.__hotkey_code = []
         self.__hotkey_combo = set()
         self.setHotkey(hotkey)
         
@@ -39,9 +56,6 @@ class Hotkey:
                 name += " + "
         return name
     
-    def getHotkeyCode(self):
-        return self.__hotkey_code
-    
     def getHotkeyCombo(self):
         return self.__hotkey_combo
     
@@ -50,8 +64,7 @@ class Hotkey:
             self.__hotkey = Hotkey.parse(hotkey)
         elif type(hotkey) == list:
             self.__hotkey = hotkey
-        self.__hotkey_code = Hotkey.hotkeyToCode(self.__hotkey)
-        self.__hotkey_combo = Hotkey.hotkeyToCombo(self.__hotkey_code)
+        self.__hotkey_combo = Hotkey.hotkeyToCombo(self.__hotkey)
     
     @staticmethod
     def parse(hotkey: str) -> list:
@@ -91,7 +104,6 @@ class Hotkey:
                 if type(i) == int:
                     codes.append(i)
                     continue
-                print(type(i))
                 try:
                     key_code = i.vk
                 except AttributeError:
@@ -108,15 +120,12 @@ class Hotkey:
     @staticmethod
     def hotkeyToCombo(hotkey) -> set:
         if type(hotkey) == str:
-            hotkey = Hotkey.hotkeyToCode(hotkey)
+            hotkey = Hotkey.parse(hotkey)
             
         if type(hotkey) == list:
             combo = set()
             for i in hotkey:
-                val = i
-                if Hotkey.isKey(i):
-                    val = Hotkey.hotkeyToCode(i)
-                combo.add(val)
+                combo.add(i)
             return combo
         
     @staticmethod
