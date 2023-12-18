@@ -17,6 +17,7 @@ class Hotkey:
     def __init__(self, hotkey) -> None:
         self.__hotkey = []
         self.__hotkey_code = []
+        self.__hotkey_combo = set()
         self.setHotkey(hotkey)
         
     def getHotkey(self):
@@ -32,7 +33,7 @@ class Hotkey:
             elif type(k) == mouse.Button:
                 name += str(k)[7:]
             else:
-                name += str(k)
+                name += str(k).replace("\'", "")
 
             if i < length-1:
                 name += " + "
@@ -41,12 +42,16 @@ class Hotkey:
     def getHotkeyCode(self):
         return self.__hotkey_code
     
+    def getHotkeyCombo(self):
+        return self.__hotkey_combo
+    
     def setHotkey(self, hotkey):
         if type(hotkey) == str:
             self.__hotkey = Hotkey.parse(hotkey)
         elif type(hotkey) == list:
             self.__hotkey = hotkey
         self.__hotkey_code = Hotkey.hotkeyToCode(self.__hotkey)
+        self.__hotkey_combo = Hotkey.hotkeyToCombo(self.__hotkey_code)
     
     @staticmethod
     def parse(hotkey: str) -> list:
@@ -92,7 +97,33 @@ class Hotkey:
                     key_code = i.value.vk
                 codes.append(key_code)
             return codes
-
+        else:
+            try:
+                key_code = hotkey.vk
+            except AttributeError:
+                key_code = hotkey.value.vk
+            return key_code
+        
+    @staticmethod
+    def hotkeyToCombo(hotkey) -> set:
+        if type(hotkey) == str:
+            hotkey = Hotkey.hotkeyToCode(hotkey)
+            
+        if type(hotkey) == list:
+            combo = set()
+            for i in hotkey:
+                val = i
+                if Hotkey.isKey(i):
+                    val = Hotkey.hotkeyToCode(i)
+                combo.add(val)
+            return combo
+        
+    @staticmethod
+    def isKey(key) -> bool:
+        if type(key) == keyboard.KeyCode or type(key) == keyboard.Key:
+            return True
+        return False
+        
 class Recorder:
     class InputOption(Enum):
         MOUSE = 1
@@ -127,8 +158,12 @@ class Recorder:
         self.__end = 0 # end time
         self.__delay = 0 # delay
         self.__hotkey_pos_in_record = {} # used to delete the hotkeys from record upon exiting
-        for i in self.__hotkeys[self.Hotkey.START]:
+        for i in self.__hotkeys[self.Hotkey.START].getHotkeyCode():
             self.__hotkey_pos_in_record[i] = -1
+            
+    def testHotkey(self):
+        for i in self.__hotkeys:
+            print("{0}".format(i.getHotkeyName()))
     
     # Getter
     def getRecord(self) -> list:
@@ -569,10 +604,8 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    hotkey = Hotkey("ctrl_l + shift_r")
-    print(hotkey.getHotkeyName())
-    print(type(str(Hotkey.parse("a")[0])))
-    print(Hotkey.hotkeyToCode("ctrl_l + shift_r"))
+    recorder = Recorder(start_hotkey="ctrl + shift", stop_hotkey="ctrl + shift", cancel_hotkey="ctrl_l + z")
+    recorder.testHotkey()
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
