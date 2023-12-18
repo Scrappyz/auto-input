@@ -2,8 +2,7 @@ import time
 import logging
 import json
 import argparse
-from enum import Enum
-from enum import IntEnum
+from enum import Enum, IntEnum
 from os import getcwd
 from pyautogui import position as currentMousePosition
 from pathlib import Path
@@ -14,7 +13,7 @@ logging.basicConfig(format="[%(levelname)s] %(message)s")
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
-class Input:
+class Recorder:
     class InputOption(Enum):
         MOUSE = 1
         KEYBOARD = 2
@@ -423,22 +422,22 @@ def strToJson(s: str) -> str:
 def strToMouseMovement(s: str):
     s = s.lower()
     if s.startswith("abs"):
-        return Input.MouseMovement.ABSOLUTE
+        return Recorder.MouseMovement.ABSOLUTE
     elif s.startswith("rel"):
-        return Input.MouseMovement.RELATIVE
+        return Recorder.MouseMovement.RELATIVE
 
 def addRecord(args, record_dir):
     record_dir = Path(record_dir)
     if not record_dir.exists():
         record_dir.mkdir(parents=True)
         
-    input = Input()
+    input = Recorder()
     input_option = set()
     record_name = strToJson(args.record)
     if args.mouse:
-        input_option.add(Input.InputOption.MOUSE)
+        input_option.add(Recorder.InputOption.MOUSE)
     if args.keyboard:
-        input_option.add(Input.InputOption.KEYBOARD)
+        input_option.add(Recorder.InputOption.KEYBOARD)
     
     if not input_option:
         print("[ERROR] Input option cannot be empty, try adding either '-m' or '-k' flag")
@@ -470,7 +469,7 @@ def listRecords(path):
         
 def playRecord(args, record_dir):
     record_dir = Path(record_dir)
-    input = Input()
+    input = Recorder()
     record_name = str(record_dir.joinpath(strToJson(args.record)))
     input.getRecordFromJson(record_name)
     input.play(args.loop, strToMouseMovement(args.movement), args.speed)
@@ -490,7 +489,7 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    # input = Input()
+    # input = Recorder()
     # input.test()
     
     if not config_path.exists():
