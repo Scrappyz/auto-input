@@ -30,6 +30,7 @@ def keyToScanCode(k: str) -> int:
 
 class Hotkey:
     __pressed = set()
+    __waiting = False
     
     def __init__(self, hotkey="") -> None:
         self.__hotkey = []
@@ -104,15 +105,21 @@ class Hotkey:
         else:
             combos[frozenset(Hotkey.hotkeyToCombo(hotkeys))] = hotkeys
         
+        Hotkey.__waiting = True
         k = ""
-        while frozenset(Hotkey.__pressed) not in combos.keys(): 
+        while Hotkey.__waiting and frozenset(Hotkey.__pressed) not in combos.keys(): 
             k = keyboard.key_to_scan_codes(keyboard.read_key())[0]
             if k not in Hotkey.__pressed:
                 Hotkey.__pressed.add(k)
             else:
                 Hotkey.__pressed.remove(k)
 
+        Hotkey.__waiting = False
         return combos[frozenset(Hotkey.__pressed)]
+    
+    @staticmethod
+    def stopWait():
+        Hotkey.__waiting = False
             
     @staticmethod
     def splitKeys(k: str) -> list:
@@ -190,9 +197,8 @@ class Recorder:
         RELEASE = 1
         
     class State(IntEnum):
-        READY = 0
-        RECORDING = 1
-        PLAYING = 2
+        RECORDING = 0
+        PLAYING = 1
         
     class Hotkeys(IntEnum):
         START = 0
@@ -204,6 +210,15 @@ class Recorder:
         self.__record = []
         self.__pressed = set()
         self.__hotkeys = [Hotkey("ctrl+shift"), Hotkey(""), Hotkey("ctrl+alt"), Hotkey("ctrl+z")]
+        self.__states = [False, False]
+        
+    def __start(self, state):
+        if not self.__states[state]:
+            self.__states[state] = True
+            
+    def __stop(self, state):
+        if not self.__states[state]:
+            self.__states[state] = False
         
     def __mouseInput(self, event):
         self.__record.append(event)
