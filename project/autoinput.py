@@ -47,7 +47,7 @@ class Hotkey:
         "f12": 123, "f2": 113, "f3": 114, "f4": 115, "f5": 116, "f6": 117, "f7": 118, "f8": 119, 
         "f9": 120, "insert": 45, "left": 37, "media_next": 176, "media_play_pause": 179, 
         "media_previous": 177, "media_volume_down": 174, "media_volume_mute": 173, "media_volume_up": 175, 
-        "num_lock": 144, "print_screen": 44, "right": 39, "shift": 160, "shift_r": 161, "space": 32, 
+        "num_lock": 144, "print_screen": 44, "right": 39, "shift_l": 160, "shift_r": 161, "space": 32, 
         "tab": 9, "up": 38, '[': 219, '\\\\': 220, ']': 221, '`': 192, 'a': 65, 'b': 66, 'c': 67, 'd': 68, 'e': 69, 
         'f': 70, 'g': 71, 'h': 72, 'i': 73, 'j': 74, 'k': 75, 'l': 76, 'm': 77, 'n': 78, 'o': 79, 'p': 80, 'q': 81, 'r': 82, 
         's': 83, 't': 84, 'u': 85, 'v': 86, 'w': 87, 'x': 88, 'y': 89, 'z': 90})
@@ -133,22 +133,15 @@ class Hotkey:
                 continue
             
             if key:
-                if len(key) == 1:
-                    keys.append(keyboard.HotKey.parse(key)[0])
-                else:
-                    keys.append(keyboard.HotKey.parse("<" + key + ">")[0])
+                keys.append(key)
                 key = ""
         
         if key:
-            if len(key) == 1:
-                keys.append(keyboard.HotKey.parse(key)[0])
-            else:
-                keys.append(keyboard.HotKey.parse("<" + key + ">")[0])
-            key = ""           
+            keys.append(key)
         return keys
     
     @staticmethod
-    def keyToCode(key) -> list:
+    def keyToCode(key, force_list_return_type=False):
         if type(key) == str:
             key = Hotkey.parse(key)
         
@@ -158,15 +151,11 @@ class Hotkey:
                 if type(i) == int:
                     codes.append(i)
                     continue
-                if type(i) == keyboard.KeyCode:
-                    i = i.char
-                elif type(i) == keyboard.Key:
-                    typeVal(i)
-                #codes.append(Hotkey.__keys[i])
+                codes.append(Hotkey.__keys[i])
+            if not force_list_return_type and len(codes) == 1:
+                return codes[0]
             return codes
         else:
-            if type(key) == keyboard.KeyCode:
-                return Hotkey.__keys[key.char]
             return Hotkey.__keys[key]
         
     @staticmethod
@@ -722,7 +711,7 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    print(Hotkey.keyToCode("ctrl"))
+    print(Hotkey.parse("ctrl + shift"))
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
