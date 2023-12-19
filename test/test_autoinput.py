@@ -34,6 +34,18 @@ class TestAutoInput(unittest.TestCase):
         self.assertEqual(Hotkey.isKey(65), True)
         self.assertEqual(Hotkey.isKey("cteg"), False)
         
+    def test_addToPressedKeys(self):
+        Hotkey.addToPressedKeys("a")
+        self.assertEqual(Hotkey.getPressedKeys(), {65})
+        Hotkey.addToPressedKeys("ctrl")
+        self.assertEqual(Hotkey.getPressedKeys(), {65, 162})
+        Hotkey.addToPressedKeys(62)
+        self.assertEqual(Hotkey.getPressedKeys(), {65, 162, 62})
+        Hotkey.addToPressedKeys('a')
+        self.assertEqual(Hotkey.getPressedKeys(), {65, 162, 62})
+        Hotkey.releaseAllKeys()
+        self.assertEqual(Hotkey.getPressedKeys(), set())
+        
     # def test_strToJson(self):
     #     self.assertEqual(strToJson("wassup"), "wassup.json")
     #     self.assertEqual(strToJson("wassup.json"), "wassup.json")

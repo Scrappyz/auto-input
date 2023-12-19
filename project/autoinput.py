@@ -140,6 +140,13 @@ class Hotkey:
                     Hotkey.__pressed.remove(key)
         else:
             raise TypeError
+        
+    @staticmethod
+    def releaseAllKeys():
+        kb = keyboard.Controller()
+        for i in Hotkey.__pressed:
+            kb.release(i)
+            Hotkey.__pressed.remove(i)
     
     @staticmethod
     def parse(hotkey: str) -> list:
@@ -744,14 +751,8 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    hotkey = Hotkey("ctrl + shift")
-    print(hotkey.getHotkeyName())
-    Hotkey.addToPressedKeys("ctrl")
-    Hotkey.addToPressedKeys("shift")
-    print(Hotkey.getPressedKeys())
-    print(Hotkey.isKey("ctrl_l"))
-    print(Hotkey.isKey(65))
-    print(Hotkey.isKey(""))
+    kb = keyboard.Controller()
+    kb.press(keyboard.KeyCode.from_vk(Hotkey.keyToCode("a")))
 
     # if not config_path.exists():
     #     writeConfig(config, config_path)
