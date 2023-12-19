@@ -153,6 +153,13 @@ class Recorder:
         READY = 0
         RECORDING = 1
         PLAYING = 2
+        
+    class InputType(IntEnum):
+        KEY = 0
+        BUTTON = 1
+        MOVE = 2
+        SCROLL = 3
+        DELAY = 4
     
     def __init__(self, start_hotkey="ctrl_l+shift_l", pause_hotkey="", stop_hotkey="ctrl_l+shift_l", cancel_hotkey="ctrl_l+z"):
         self.__record = []
