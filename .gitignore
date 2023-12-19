@@ -4,6 +4,7 @@
 project/__pycache__
 project/config.json
 project/test.py
+project/keys.py
 !.gitignore
 !test/
 !test/**
