@@ -8,6 +8,8 @@ from pyautogui import position as currentMousePosition
 from pathlib import Path
 from pynput import mouse
 from pynput import keyboard
+from bidict import bidict
+import sys
 
 logging.basicConfig(format="[%(levelname)s] %(message)s")
 log = logging.getLogger()
@@ -33,6 +35,21 @@ def release(key):
 
 class Hotkey:
     __pressed = set()
+    __keys = bidict({'""': 222, '*': 106, '+': 107, ',': 188, '-': 109, '.': 190, '/': 191, '0': 48, '1': 49, '2': 50, '3': 51, '4': 52, 
+        '5': 53, '6': 54, '7': 55, '8': 56, '9': 57, ';': 186, '<100>': 100, '<101>': 101, '<102>': 102, '<103>': 103, 
+        '<104>': 104, '<105>': 105, '<110>': 110, '<96>': 96, '<97>': 97, '<98>': 98, '<99>': 99, '=': 187, keyboard.Key.alt_gr: 165,
+        keyboard.Key.alt_l: 164, keyboard.Key.backspace: 8, keyboard.Key.caps_lock: 20, keyboard.Key.cmd: 91, keyboard.Key.ctrl_l: 162, keyboard.Key.ctrl_r: 163, 
+        keyboard.Key.delete: 46, keyboard.Key.down: 40, keyboard.Key.enter: 13, keyboard.Key.esc: 27, keyboard.Key.f1: 112, keyboard.Key.f10: 121, keyboard.Key.f11: 122, 
+        keyboard.Key.f12: 123, keyboard.Key.f2: 113, keyboard.Key.f3: 114, keyboard.Key.f4: 115, keyboard.Key.f5: 116, keyboard.Key.f6: 117, keyboard.Key.f7: 118, keyboard.Key.f8: 119, 
+        keyboard.Key.f9: 120, keyboard.Key.insert: 45, keyboard.Key.left: 37, keyboard.Key.media_next: 176, keyboard.Key.media_play_pause: 179, 
+        keyboard.Key.media_previous: 177, keyboard.Key.media_volume_down: 174, keyboard.Key.media_volume_mute: 173, keyboard.Key.media_volume_up: 175, 
+        keyboard.Key.num_lock: 144, keyboard.Key.print_screen: 44, keyboard.Key.right: 39, keyboard.Key.shift: 160, keyboard.Key.shift_r: 161, keyboard.Key.space: 32, 
+        keyboard.Key.tab: 9, keyboard.Key.up: 38, '[': 219, '\\\\': 220, ']': 221, '`': 192, 'a': 65, 'b': 66, 'c': 67, 'd': 68, 'e': 69, 
+        'f': 70, 'g': 71, 'h': 72, 'i': 73, 'j': 74, 'k': 75, 'l': 76, 'm': 77, 'n': 78, 'o': 79, 'p': 80, 'q': 81, 'r': 82, 
+        's': 83, 't': 84, 'u': 85, 'v': 86, 'w': 87, 'x': 88, 'y': 89, 'z': 90})
+    
+    def size():
+        print(sys.getsizeof(Hotkey.__keys))
     
     def __init__(self, hotkey="", combo={}) -> None:
         self.__hotkey = []
@@ -93,6 +110,14 @@ class Hotkey:
             return
         Hotkey.__pressed.clear()
         return False
+    
+    @staticmethod
+    def keyToCode(key):
+        return Hotkey.__keys[key]
+    
+    @staticmethod
+    def codeToKey(code):
+        return Hotkey.__keys.inverse[code]
     
     @staticmethod
     def parse(hotkey: str) -> list:
@@ -694,6 +719,7 @@ def writeConfig(config, config_path):
         file.write(data)
 
 def main():
+    start = time.time()
     current_dir = Path(__file__).parent.resolve()
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
@@ -701,11 +727,13 @@ def main():
     # input = Recorder()
     # input.testHotkey()
     
-    hotkey = Hotkey()
-    hotkey.setHotkeyFromInput()
-    print(hotkey.getHotkey())
-    print(hotkey.getHotkeyName())
-    print(hotkey.getHotkeyCombo())
+    # print(Hotkey.keyToCode('a'))
+    # print(Hotkey.codeToKey(65))
+    # Hotkey.size()
+    # hotkey = Hotkey("ctrl+z")
+    # print(sys.getsizeof(hotkey))
+    
+    print(time.time() - start)
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
