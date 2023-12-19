@@ -287,7 +287,7 @@ class Recorder:
         return t * 1 / mult
     
     # Keyboard listeners
-    def __on_press(self, key):
+    def __onPressForRecord(self, key):
         key_code = self.keyToInt(key)
         start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
         stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
@@ -331,7 +331,7 @@ class Recorder:
             print("[END] Recording has finished")
             return False
     
-    def __on_release(self, key):
+    def __onReleaseForRecord(self, key):
         key_code = self.keyToInt(key)
         start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
         
@@ -349,7 +349,7 @@ class Recorder:
         
         self.__pressed.remove(key_code)
         
-    def __on_press_for_play(self, key):
+    def __onPressForPlay(self, key):
         key_code = self.keyToInt(key)
         start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
         stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
@@ -448,7 +448,7 @@ class Recorder:
         
         print("[READY] Press '{0}' to start recording or press '{1}' to cancel".format(self.__hotkeys[self.Hotkey.START].getHotkeyName(), self.__hotkeys[self.Hotkey.CANCEL].getHotkeyName()))
         with mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
-            with keyboard.Listener(on_press=self.__on_press, on_release=self.__on_release) as listener:
+            with keyboard.Listener(on_press=self.__onPressForRecord, on_release=self.__onReleaseForRecord) as listener:
                 listener.join() 
     
         self.__pressed.clear()
@@ -458,13 +458,13 @@ class Recorder:
         mouse_controller = mouse.Controller()
         
         print("[READY] Press 'ctrl + shift' to start playback or press 'ctrl + z' to cancel")
-        with keyboard.Listener(on_press=self.__on_press_for_play, on_release=self.__on_release_for_play) as listener:
+        with keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__on_release_for_play) as listener:
             listener.join()
         
         if not self.__state[self.State.PLAYING]:
             return
         
-        key_listener = keyboard.Listener(on_press=self.__on_press_for_play, on_release=self.__on_release_for_play)
+        key_listener = keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__on_release_for_play)
         key_listener.start()
         
         length = len(self.__record)
