@@ -9,8 +9,6 @@ from pathlib import Path
 from pynput import mouse
 from pynput import keyboard
 from bidict import bidict
-from pympler import asizeof
-import sys
 
 logging.basicConfig(format="[%(levelname)s] %(message)s")
 log = logging.getLogger()
@@ -41,13 +39,13 @@ class Hotkey:
     __pressed = set()
     __keys = bidict({'""': 222, '*': 106, '+': 107, ',': 188, '-': 109, '.': 190, '/': 191, '0': 48, '1': 49, '2': 50, '3': 51, '4': 52, 
         '5': 53, '6': 54, '7': 55, '8': 56, '9': 57, ';': 186, '<100>': 100, '<101>': 101, '<102>': 102, '<103>': 103, 
-        '<104>': 104, '<105>': 105, '<110>': 110, '<96>': 96, '<97>': 97, '<98>': 98, '<99>': 99, '=': 187, "alt_gr": 165,
-        "alt_l": 164, "backspace": 8, "caps_lock": 20, "cmd": 91, "ctrl_l": 162, "ctrl_r": 163, 
+        '<104>': 104, '<105>': 105, '<110>': 110, '<96>': 96, '<97>': 97, '<98>': 98, '<99>': 99, '=': 187, "alt_r": 165,
+        "alt": 164, "backspace": 8, "caps_lock": 20, "cmd": 91, "ctrl": 162, "ctrl_r": 163, 
         "delete": 46, "down": 40, "enter": 13, "esc": 27, "f1": 112, "f10": 121, "f11": 122, 
         "f12": 123, "f2": 113, "f3": 114, "f4": 115, "f5": 116, "f6": 117, "f7": 118, "f8": 119, 
         "f9": 120, "insert": 45, "left": 37, "media_next": 176, "media_play_pause": 179, 
         "media_previous": 177, "media_volume_down": 174, "media_volume_mute": 173, "media_volume_up": 175, 
-        "num_lock": 144, "print_screen": 44, "right": 39, "shift_l": 160, "shift_r": 161, "space": 32, 
+        "num_lock": 144, "print_screen": 44, "right": 39, "shift": 160, "shift_r": 161, "space": 32, 
         "tab": 9, "up": 38, '[': 219, '\\\\': 220, ']': 221, '`': 192, 'a': 65, 'b': 66, 'c': 67, 'd': 68, 'e': 69, 
         'f': 70, 'g': 71, 'h': 72, 'i': 73, 'j': 74, 'k': 75, 'l': 76, 'm': 77, 'n': 78, 'o': 79, 'p': 80, 'q': 81, 'r': 82, 
         's': 83, 't': 84, 'u': 85, 'v': 86, 'w': 87, 'x': 88, 'y': 89, 'z': 90})
@@ -64,14 +62,8 @@ class Hotkey:
         name = ""
         length = len(self.__hotkey)
         for i in range(length):
-            k = self.__hotkey[i]
-            if type(k) == keyboard.Key:
-                name += str(k)[4:]
-            elif type(k) == mouse.Button:
-                name += str(k)[7:]
-            else:
-                name += str(k).replace("\'", "")
-
+            key = self.__hotkey[i]
+            name += key
             if i < length-1:
                 name += " + "
         return name
@@ -79,16 +71,15 @@ class Hotkey:
     def getHotkeyCombo(self):
         return self.__hotkey_combo
     
-    def setHotkey(self, hotkey, combo):
+    def setHotkey(self, hotkey):
         if type(hotkey) == str:
             self.__hotkey = Hotkey.parse(hotkey)
         elif type(hotkey) == list:
-            self.__hotkey = hotkey
-            
-        if not combo:   
-            self.__hotkey_combo = Hotkey.hotkeyToCombo(self.__hotkey)
-        else:
-            self.__hotkey_combo = combo
+            for i in hotkey:
+                if type(i) == str:
+                    self.__hotkey.append(i)
+        
+        self.__hotkey_combo = Hotkey.keyToCombo(self.__hotkey)
         
     def setHotkeyFromInput(self):
         self.__hotkey.clear()
@@ -112,13 +103,43 @@ class Hotkey:
         Hotkey.__pressed.clear()
         return False
     
-    # @staticmethod
-    # def keyToCode(key):
-    #     return Hotkey.__keys[key]
+    @staticmethod
+    def getPressedKeys():
+        return Hotkey.__pressed
     
-    # @staticmethod
-    # def codeToKey(code):
-    #     return Hotkey.__keys.inverse[code]
+    @staticmethod
+    def addToPressedKeys(key):
+        t = type(key)
+        if t == str or t == Hotkey:
+            key = Hotkey.keyToCode(key)
+        
+        t = type(key)
+        if t == list:
+            for i in key:
+                if i not in Hotkey.__pressed:
+                    Hotkey.__pressed.add(i)
+        elif t == int:
+            if key not in Hotkey.__pressed:
+                Hotkey.__pressed.add(key)
+        else:
+            raise TypeError
+        
+    @staticmethod
+    def removeFromPressedKeys(key):
+        t = type(key)
+        if t == str:
+            key = Hotkey.keyToCode(key)
+        
+        t = type(key)
+        if t == list:
+            for i in key:
+                if i in Hotkey.__pressed:
+                    Hotkey.__pressed.remove(i)
+        elif t == int:
+            if key in Hotkey.__pressed:
+                    Hotkey.__pressed.remove(key)
+        else:
+            raise TypeError
     
     @staticmethod
     def parse(hotkey: str) -> list:
@@ -142,16 +163,23 @@ class Hotkey:
     
     @staticmethod
     def keyToCode(key, force_list_return_type=False):
-        if type(key) == str:
+        t = type(key)
+        if t == str:
             key = Hotkey.parse(key)
+        elif t == Hotkey:
+            key = key.getHotkey()
         
-        if type(key) == list:
+        t = type(key)
+        if t == list:
             codes = []
             for i in key:
-                if type(i) == int:
+                t = type(i)
+                if t == int:
                     codes.append(i)
-                    continue
-                codes.append(Hotkey.__keys[i])
+                elif t == str:
+                    codes.append(Hotkey.__keys[i])
+                else:
+                    raise TypeError
             if not force_list_return_type and len(codes) == 1:
                 return codes[0]
             return codes
@@ -159,19 +187,38 @@ class Hotkey:
             return Hotkey.__keys[key]
         
     @staticmethod
-    def hotkeyToCombo(hotkey) -> set:
-        if type(hotkey) == str:
-            hotkey = Hotkey.parse(hotkey)
+    def keyToCombo(key) -> set:
+        t = type(key)
+        if t == str:
+            key = Hotkey.parse(key)
+        elif t == Hotkey:
+            key = key.getHotkey()
             
-        if type(hotkey) == list:
+        t = type(key)
+        if t == list:
             combo = set()
-            for i in hotkey:
-                combo.add(i)
+            for i in key:
+                t = type(i)
+                if t == int:
+                    combo.add(i)
+                elif t == str:
+                    combo.add(Hotkey.__keys[i])
             return combo
         
     @staticmethod
     def isKey(key) -> bool:
-        if type(key) == keyboard.KeyCode or type(key) == keyboard.Key:
+        t = type(key)
+        if t == str:
+            try:
+                k = Hotkey.__keys[key]
+            except KeyError:
+                return False
+            return True
+        elif t == int:
+            try:
+                k = Hotkey.__keys.inverse[key]
+            except KeyError:
+                return False
             return True
         return False
         
@@ -275,18 +322,6 @@ class Recorder:
             
     # Convertions
     @staticmethod
-    def keyToInt(key) -> int:
-        try:
-            key_code = key.vk
-        except AttributeError:
-            key_code = key.value.vk
-        return key_code
-    
-    @staticmethod
-    def intToKey(n: int):
-        return keyboard.KeyCode.from_vk(n)
-    
-    @staticmethod
     def mouseToStr(button) -> str:
         if button == mouse.Button.left:
             return "l"
@@ -328,13 +363,11 @@ class Recorder:
         return t * 1 / mult
     
     # Keyboard listeners
-    
     def __onPressForReady(self, key):
         global _pressed
         start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
         cancel_hotkey = self.__hotkeys[self.Hotkey.CANCEL].getHotkeyCombo()
         
-        print("beofre: {0} | {1} | {2}".format(key, type(key), self.keyToInt(key)))
         if key in start_hotkey or key in cancel_hotkey:
             print("{0} | {1}".format(start_hotkey, cancel_hotkey))
             print("{0} | {1}".format(key, type(key)))
@@ -711,8 +744,15 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    print(Hotkey.parse("ctrl + shift"))
-    
+    hotkey = Hotkey("ctrl + shift")
+    print(hotkey.getHotkeyName())
+    Hotkey.addToPressedKeys("ctrl")
+    Hotkey.addToPressedKeys("shift")
+    print(Hotkey.getPressedKeys())
+    print(Hotkey.isKey("ctrl_l"))
+    print(Hotkey.isKey(65))
+    print(Hotkey.isKey(""))
+
     # if not config_path.exists():
     #     writeConfig(config, config_path)
     # else:
