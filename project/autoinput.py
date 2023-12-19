@@ -9,11 +9,15 @@ from pathlib import Path
 from pynput import mouse
 from pynput import keyboard
 from bidict import bidict
+from pympler import asizeof
 import sys
 
 logging.basicConfig(format="[%(levelname)s] %(message)s")
 log = logging.getLogger()
 log.setLevel(logging.INFO)
+
+def typeVal(v):
+    print("{0} | {1}".format(type(v), v))
 
 def press(key):
     if type(key) == str:
@@ -48,13 +52,10 @@ class Hotkey:
         'f': 70, 'g': 71, 'h': 72, 'i': 73, 'j': 74, 'k': 75, 'l': 76, 'm': 77, 'n': 78, 'o': 79, 'p': 80, 'q': 81, 'r': 82, 
         's': 83, 't': 84, 'u': 85, 'v': 86, 'w': 87, 'x': 88, 'y': 89, 'z': 90})
     
-    def size():
-        print(sys.getsizeof(Hotkey.__keys))
-    
-    def __init__(self, hotkey="", combo={}) -> None:
+    def __init__(self, hotkey="") -> None:
         self.__hotkey = []
         self.__hotkey_combo = set()
-        self.setHotkey(hotkey, combo)
+        self.setHotkey(hotkey)
         
     def getHotkey(self):
         return self.__hotkey
@@ -111,13 +112,13 @@ class Hotkey:
         Hotkey.__pressed.clear()
         return False
     
-    @staticmethod
-    def keyToCode(key):
-        return Hotkey.__keys[key]
+    # @staticmethod
+    # def keyToCode(key):
+    #     return Hotkey.__keys[key]
     
-    @staticmethod
-    def codeToKey(code):
-        return Hotkey.__keys.inverse[code]
+    # @staticmethod
+    # def codeToKey(code):
+    #     return Hotkey.__keys.inverse[code]
     
     @staticmethod
     def parse(hotkey: str) -> list:
@@ -147,28 +148,26 @@ class Hotkey:
         return keys
     
     @staticmethod
-    def hotkeyToCode(hotkey) -> list:
-        if type(hotkey) == str:
-            hotkey = Hotkey.parse(hotkey)
+    def keyToCode(key) -> list:
+        if type(key) == str:
+            key = Hotkey.parse(key)
         
-        if type(hotkey) == list:
+        if type(key) == list:
             codes = []
-            for i in hotkey:
+            for i in key:
                 if type(i) == int:
                     codes.append(i)
                     continue
-                try:
-                    key_code = i.vk
-                except AttributeError:
-                    key_code = i.value.vk
-                codes.append(key_code)
+                if type(i) == keyboard.KeyCode:
+                    i = i.char
+                elif type(i) == keyboard.Key:
+                    typeVal(i)
+                #codes.append(Hotkey.__keys[i])
             return codes
         else:
-            try:
-                key_code = hotkey.vk
-            except AttributeError:
-                key_code = hotkey.value.vk
-            return key_code
+            if type(key) == keyboard.KeyCode:
+                return Hotkey.__keys[key.char]
+            return Hotkey.__keys[key]
         
     @staticmethod
     def hotkeyToCombo(hotkey) -> set:
@@ -214,7 +213,7 @@ class Recorder:
         SCROLL = 3
         DELAY = 4
     
-    def __init__(self, start_hotkey=("ctrl_l+shift_l", {162, 160}), pause_hotkey=("", {}), stop_hotkey=("ctrl_l+shift_l", {162, 160}), cancel_hotkey=("ctrl_l+z", {162, 90})):
+    def __init__(self, start_hotkey="ctrl_l+shift_l", pause_hotkey="", stop_hotkey="ctrl_l+shift_l", cancel_hotkey="ctrl_l+z"):
         self.__record = []
         self.__state = [False, False, False]
         self.__hotkeys = [Hotkey(start_hotkey), Hotkey(pause_hotkey), Hotkey(stop_hotkey), Hotkey(cancel_hotkey)]
@@ -719,21 +718,11 @@ def writeConfig(config, config_path):
         file.write(data)
 
 def main():
-    start = time.time()
     current_dir = Path(__file__).parent.resolve()
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    # input = Recorder()
-    # input.testHotkey()
-    
-    # print(Hotkey.keyToCode('a'))
-    # print(Hotkey.codeToKey(65))
-    # Hotkey.size()
-    # hotkey = Hotkey("ctrl+z")
-    # print(sys.getsizeof(hotkey))
-    
-    print(time.time() - start)
+    print(Hotkey.keyToCode("ctrl"))
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
