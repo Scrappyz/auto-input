@@ -504,9 +504,12 @@ class Recorder:
             listener.join()
         
         _pressed.clear()
-        print("done")
-        if self.__state[self.State.RECORDING]:
-            print("recording")
+
+        if not self.__state[self.State.RECORDING]:
+            print("[END] Recording cancelled")
+            return
+        
+        print("[START] Press '{0}' to end recording".format(self.__hotkeys[self.Hotkey.STOP].getHotkeyName()))
         # with _mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
         #     with _keyboard.Listener(on_press=self.__onPressForRecord, on_release=self.__onReleaseForRecord) as listener:
         #         listener.join() 
@@ -701,8 +704,9 @@ def main():
     config_path = current_dir.joinpath("config._json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    #print(__convertKeyCode(_keyboard.KeyCode.from_char('a')))
-    print(toKeyCode([_keyboard.KeyCode.from_vk(162), _keyboard.KeyCode.from_char('a')]))
+    input = Recorder(stop_hotkey="ctrl + alt", cancel_hotkey="ctrl + x")
+    input.record()
+    
     # if not config_path.exists():
     #     writeConfig(config, config_path)
     # else:

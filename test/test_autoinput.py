@@ -30,6 +30,7 @@ class TestAutoInput(unittest.TestCase):
         self.assertEqual(toKeyCode("ctrl + a"), [162, 65])
         self.assertEqual(toKeyCode([162,65]), [162, 65])
         self.assertEqual(toKeyCode(["ctrl", "a"]), [162, 65])
+        self.assertEqual(toKeyCode(keyboard.KeyCode.from_vk(162)), 162)
         self.assertEqual(toKeyCode([keyboard.KeyCode.from_vk(162), keyboard.KeyCode.from_char('a')]), [162, 65])
         
     def test_toCombo(self):
