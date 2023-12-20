@@ -1,18 +1,18 @@
-import time as __time
-import logging as __logging
-import json as __json
 import argparse as __argparse
-from enum import IntEnum as __IntEnum
-from pathlib import Path as __path
-from pynput import mouse as __mouse
-from pynput import keyboard as __keyboard
+import time as _time
+import logging as _logging
+import json as _json
+from enum import IntEnum as _IntEnum
+from pathlib import Path as _path
+from pynput import mouse as _mouse
+from pynput import keyboard as _keyboard
 from bidict import bidict as __bidict
 
-__logging.basicConfig(format="[%(levelname)s] %(message)s")
-__log = __logging.getLogger()
-__log.setLevel(__logging.INFO)
+_logging.basicConfig(format="[%(levelname)s] %(message)s")
+_log = _logging.getLogger()
+_log.setLevel(_logging.INFO)
 
-__pressed = set()
+_pressed = set()
 __keys = __bidict({'""': 222, '*': 106, '+': 107, ',': 188, '-': 109, '.': 190, '/': 191, '0': 48, '1': 49, '2': 50, '3': 51, '4': 52, 
     '5': 53, '6': 54, '7': 55, '8': 56, '9': 57, ';': 186, '<100>': 100, '<101>': 101, '<102>': 102, '<103>': 103, 
     '<104>': 104, '<105>': 105, '<110>': 110, '<96>': 96, '<97>': 97, '<98>': 98, '<99>': 99, '=': 187, "alt_r": 165,
@@ -25,29 +25,11 @@ __keys = __bidict({'""': 222, '*': 106, '+': 107, ',': 188, '-': 109, '.': 190, 
     "tab": 9, "up": 38, '[': 219, '\\\\': 220, ']': 221, '`': 192, 'a': 65, 'b': 66, 'c': 67, 'd': 68, 'e': 69, 
     'f': 70, 'g': 71, 'h': 72, 'i': 73, 'j': 74, 'k': 75, 'l': 76, 'm': 77, 'n': 78, 'o': 79, 'p': 80, 'q': 81, 'r': 82, 
     's': 83, 't': 84, 'u': 85, 'v': 86, 'w': 87, 'x': 88, 'y': 89, 'z': 90})
-__buttons = __bidict({"LMB": __mouse.Button.left, "MMB": __mouse.Button.middle, "RMB": __mouse.Button.right, 
-                      "X1": __mouse.Button.x1, "X2": __mouse.Button.x2})
+__buttons = __bidict({"LMB": _mouse.Button.left, "MMB": _mouse.Button.middle, "RMB": _mouse.Button.right, 
+                      "X1": _mouse.Button.x1, "X2": _mouse.Button.x2})
 
 def typeVal(v):
     print("{0} | {1}".format(type(v), v))
-
-# def press(key):
-#     if type(key) == str:
-#         key = Hotkey.parse(key)
-#     elif type(key) == Hotkey:
-#         key = key.getHotkeyCode()
-        
-#     kb = __keyboard.Controller()
-#     for i in key:
-#         kb.press(i)
-        
-# def release(key):
-#     if type(key) == str:
-#         key = Hotkey.parse(key)
-    
-#     kb = __keyboard.Controller()
-#     for i in key:
-#         kb.release(i)
 
 class Hotkey:
     def __init__(self, hotkey="") -> None:
@@ -77,23 +59,23 @@ class Hotkey:
     def setHotkeyFromInput(self):
         self.__hotkey.clear()
         self.__hotkey_combo.clear()
-        with __keyboard.Listener(on_press=self.__onPress, on_release=self.__onRelease) as listener:    
+        with _keyboard.Listener(on_press=self.__onPress, on_release=self.__onRelease) as listener:    
             listener.join()
         
     def __onPress(self, key):
-        key_code = toCode(key)
-        if key_code not in Hotkey.__pressed:
-            if __keyboard.Key.ctrl_l.value.vk in Hotkey.__pressed:
+        key_code = toKeyCode(key)
+        if key_code not in _pressed:
+            if _keyboard.Key.ctrl_l.value.vk in _pressed:
                 print("ctrl pressed")
-                __keyboard.Controller().release(__keyboard.Key.ctrl_l)
-            Hotkey.__pressed.add(key_code)
+                _keyboard.Controller().release(_keyboard.Key.ctrl_l)
+            _pressed.add(key_code)
             self.__hotkey.append(key)
             self.__hotkey_combo.add(key_code)
             
     def __onRelease(self, key):
-        if key == __keyboard.Key.ctrl_l:
+        if key == _keyboard.Key.ctrl_l:
             return
-        Hotkey.__pressed.clear()
+        _pressed.clear()
         return False
     
     @staticmethod
@@ -127,6 +109,14 @@ class Hotkey:
                 name += " + "
         return name
     
+def __convertKeyCode(char_key: _keyboard.KeyCode):
+    global __keys
+    key_code = char_key.vk
+    if key_code == None:
+        key_code = char_key.char
+        return __keys[key_code]
+    return key_code
+    
 def toString(key_code):
     global __keys
     t = type(key_code)
@@ -142,16 +132,15 @@ def toString(key_code):
         t = type(i)
         if t == int:
             names.append(__keys.inverse[i])
-        elif t == __keyboard.Key:
+        elif t == _keyboard.Key:
             names.append(__keys.inverse[i.value.vk])
-        elif t == __keyboard.KeyCode:
-            names.append(__keys.inverse[i.vk])
+        elif t == _keyboard.KeyCode:
+            names.append(__keys.inverse[__convertKeyCode(i)])
         else:
             raise TypeError
     return Hotkey.join(names)
-            
     
-def toCode(key, force_list_return_type=False):
+def toKeyCode(key, force_list_return_type=False):
     t = type(key)
     if t == str:
         key = Hotkey.parse(key)
@@ -159,9 +148,9 @@ def toCode(key, force_list_return_type=False):
         key = key.getHotkey()
     elif t == int:
         return key
-    elif t == __keyboard.KeyCode:
-        return key.vk
-    elif t == __keyboard.Key:
+    elif t == _keyboard.KeyCode:
+        return __convertKeyCode(key)
+    elif t == _keyboard.Key:
         return key.value.vk
     
     global __keys
@@ -174,9 +163,9 @@ def toCode(key, force_list_return_type=False):
                 codes.append(i)
             elif t == str:
                 codes.append(__keys[i])
-            elif t == __keyboard.KeyCode:
-                codes.append(i.vk)
-            elif t == __keyboard.Key:
+            elif t == _keyboard.KeyCode:
+                codes.append(__convertKeyCode(i))
+            elif t == _keyboard.Key:
                 codes.append(i.value.vk)
             else:
                 raise TypeError
@@ -187,221 +176,175 @@ def toCode(key, force_list_return_type=False):
         raise TypeError
     
 def toCombo(key) -> set:
-    key = toCode(key)
+    key = toKeyCode(key)
     combo = set()
     for i in key:
         combo.add(i)
     return combo
     
 def toKey(key, force_list_return_type=False):
-    key = toCode(key, True)
+    key = toKeyCode(key, True)
     keys = []
     for i in key:
-        keys.append(__keyboard.KeyCode.from_vk(i))
+        keys.append(_keyboard.KeyCode.from_vk(i))
     if not force_list_return_type and len(keys) == 1:
         return keys[0]
     return keys
+
+def isKeyString(key: str) -> bool:
+    global __keys
+    if key in __keys:
+        return True
+    return False
+
+def isKeyCode(key_code: int) -> bool:
+    global __keys
+    if key_code in __keys.inverse:
+        return True
+    return False
         
 def isKey(key) -> bool:
     global __keys
     t = type(key)
-    if t == str:
-        try:
-            k = __keys[key]
-        except KeyError:
-            return False
+    if t == _keyboard.Key or t == _keyboard.KeyCode:
         return True
-    elif t == int:
-        try:
-            k = __keys.inverse[key]
-        except KeyError:
-            return False
+    return False
+
+def isButtonString(button: str) -> bool:
+    global __buttons
+    if button in __buttons:
         return True
     return False
 
 def isButton(button) -> bool:
     global __buttons
-    t = type(button)
-    if t == str:
-        try:
-            b = __buttons[button]
-        except KeyError:
-            return False
-        return True
-    elif t == __mouse.Button:
-        try:
-            b = __buttons.inverse[button]
-        except KeyError:
-            return False
+    if type(button) == _mouse.Button:
         return True
     return False
         
-# class Recorder:
-#     class InputOption(__IntEnum):
-#         MOUSE = 1
-#         KEYBOARD = 2
+class Recorder:
+    class InputOption(_IntEnum):
+        MOUSE = 0
+        KEYBOARD = 1
         
-#     class MouseMovement(__IntEnum):
-#         ABSOLUTE = 1
-#         RELATIVE = 2
+    class MouseMovement(_IntEnum):
+        ABSOLUTE = 0
+        RELATIVE = 1
         
-#     class Hotkey(__IntEnum):
-#         START = 0
-#         PAUSE = 1
-#         STOP = 2
-#         CANCEL = 3
+    class Hotkey(_IntEnum):
+        START = 0
+        PAUSE = 1
+        STOP = 2
+        CANCEL = 3
         
-#     class State(__IntEnum):
-#         READY = 0
-#         RECORDING = 1
-#         PLAYING = 2
+    class State(_IntEnum):
+        READY = 0
+        RECORDING = 1
+        PLAYING = 2
         
-#     class InputType(__IntEnum):
-#         KEY = 0
-#         BUTTON = 1
-#         MOVE = 2
-#         SCROLL = 3
-#         DELAY = 4
+    class InputType(_IntEnum):
+        KEY = 0
+        BUTTON = 1
+        MOVE = 2
+        SCROLL = 3
+        DELAY = 4
     
-#     def __init__(self, start_hotkey="ctrl_l+shift_l", pause_hotkey="", stop_hotkey="ctrl_l+shift_l", cancel_hotkey="ctrl_l+z"):
-#         self.__record = []
-#         self.__state = [False, False, False]
-#         self.__hotkeys = [Hotkey(start_hotkey), Hotkey(pause_hotkey), Hotkey(stop_hotkey), Hotkey(cancel_hotkey)]
-#         self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
+    def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="", stop_hotkey="ctrl+shift", cancel_hotkey="ctrl+z"):
+        self.__record = []
+        self.__state = [False, False, False]
+        self.__hotkeys = [Hotkey(start_hotkey), Hotkey(pause_hotkey), Hotkey(stop_hotkey), Hotkey(cancel_hotkey)]
+        self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
         
-#         # Helper variables
-#         self.__ready_state = -1 
-#         self.__prev_mouse_pos = (-1, -1)
-#         self.__mouse_move_counter = 0 # count the number of pixels the mouse has moved
-#         self.__start = 0 # start time
-#         self.__end = 0 # end time
-#         self.__delay = 0 # delay
-#         self.__hotkey_pos_in_record = {} # used to delete the hotkeys from record upon exiting
-#         for i in self.__hotkeys[self.Hotkey.START].getHotkey():
-#             self.__hotkey_pos_in_record[i] = -1
+        # Helper variables
+        self.__ready_state = -1 
+        self.__prev_mouse_pos = (-1, -1)
+        self.__mouse_move_counter = 0 # count the number of pixels the mouse has moved
+        self.__start = 0 # start time
+        self.__end = 0 # end time
+        self.__delay = 0 # delay
+        self.__hotkey_pos_in_record = {} # used to delete the hotkeys from record upon exiting
+        for i in self.__hotkeys[self.Hotkey.START].getHotkey():
+            self.__hotkey_pos_in_record[i] = -1
+    
+    # Getter
+    def getRecord(self) -> list:
+        return self.__record
+    
+    def getRecordFromJson(self, file_path):
+        f = open(file_path)
+        data = _json.load(f)
+        self.__record = data
+        
+    # File handling
+    def saveRecordToJson(self, file_path):
+        with open(file_path, "w") as f:
+            f.write(_json.dumps(self.__record))
+    
+    # Helpers
+    def __setTime(self):
+        self.__end = _time._time()
+        current = self.__end - self.__start
+        self.__delay = float(int((current) * 1000) / 1000)
+        self.__start = _time._time()
+        
+    def __removeHotkeyFromRecord(self):
+        if self.InputOption.KEYBOARD not in self.__input_option: # do not pop if _keyboard not included
+            return
+        
+        del_count = 0
+        prev = 0
+        for i in self.__hotkey_pos_in_record.values():
+            if i < 0:
+                continue
             
-#     def testHotkey(self):
-#         for i in self.__hotkeys:
-#             print("{0} | {1}".format(i.getHotkeyName(), i.getHotkeyCombo()))
-    
-#     # Getter
-#     def getRecord(self) -> list:
-#         return self.__record
-    
-#     def getRecordFromJson(self, file_path):
-#         f = open(file_path)
-#         data = __json.load(f)
-#         self.__record = data
-        
-#     # File handling
-#     def saveRecordToJson(self, file_path):
-#         with open(file_path, "w") as f:
-#             f.write(__json.dumps(self.__record))
-    
-#     # Helpers
-#     def __setTime(self):
-#         self.__end = __time.__time()
-#         current = self.__end - self.__start
-#         self.__delay = float(int((current) * 1000) / 1000)
-#         self.__start = __time.__time()
-        
-#     def __removeHotkeyFromRecord(self):
-#         if self.InputOption.KEYBOARD not in self.__input_option: # do not pop if __keyboard not included
-#             return
-        
-#         del_count = 0
-#         prev = 0
-#         for i in self.__hotkey_pos_in_record.values():
-#             if i < 0:
-#                 continue
-            
-#             index = i
-#             if i > prev:
-#                 index -= del_count
+            index = i
+            if i > prev:
+                index -= del_count
                 
-#             __log.debug("Removed hotkey at [{0}] {1}".format(index, self.__record[index]))
-#             del self.__record[index]
-#             del_count += 1
-#             prev = i
+            _log.debug("Removed hotkey at [{0}] {1}".format(index, self.__record[index]))
+            del self.__record[index]
+            del_count += 1
+            prev = i
             
-#             if index < len(self.__record) and type(self.__record[index]) == float:
-#                 __log.debug("Removed delay at [{0}] {1}".format(index, self.__record[index]))
-#                 del self.__record[index]
-#                 del_count += 1
+            if index < len(self.__record) and type(self.__record[index]) == float:
+                _log.debug("Removed delay at [{0}] {1}".format(index, self.__record[index]))
+                del self.__record[index]
+                del_count += 1
                 
-#     def isRecordEmpty(self) -> bool:
-#         if not self.__record:
-#             return True
-#         return False
-            
-#     # Convertions
-#     @staticmethod
-#     def mouseToStr(button) -> str:
-#         if button == __mouse.Button.left:
-#             return "l"
-#         elif button == __mouse.Button.middle:
-#             return "m"
-#         elif button == __mouse.Button.right:
-#             return "r"
-        
-#     @staticmethod
-#     def strToMouse(s):
-#         if s == "l":
-#             return __mouse.Button.left
-#         elif s == "m":
-#             return __mouse.Button.middle
-#         elif s == "r":
-#             return __mouse.Button.right  
-        
-#     @staticmethod
-#     def scrollIntToStr(n) -> str:
-#         if n < 0:
-#             return "d"
-#         else:
-#             return "u"         
-        
-#     @staticmethod
-#     def scrollStrToInt(s) -> int:
-#         if s == "u":
-#             return 1
-#         elif s == "d":
-#             return -1
-#         return 0
+    def isRecordEmpty(self) -> bool:
+        if not self.__record:
+            return True
+        return False
     
-#     def __speedUp(self, t: float, mult: float) -> float:
-#         if t < 0:
-#             return 0
-#         if mult < 0:
-#             return t
+    def __speedUp(self, t: float, mult: float) -> float:
+        if t < 0:
+            return 0
+        if mult < 0:
+            return t
         
-#         return t * 1 / mult
+        return t * 1 / mult
     
     # Keyboard listeners
-    # def __onPressForReady(self, key):
-    #     global _pressed
-    #     start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
-    #     cancel_hotkey = self.__hotkeys[self.Hotkey.CANCEL].getHotkeyCombo()
-        
-    #     if key in start_hotkey or key in cancel_hotkey:
-    #         print("{0} | {1}".format(start_hotkey, cancel_hotkey))
-    #         print("{0} | {1}".format(key, type(key)))
-    #         _pressed.add(key)
-    #         if _pressed == start_hotkey:
-    #             self.__state[self.__ready_state] = True
-    #             self.__ready_state = -1
-    #             return False
-    #         elif _pressed == cancel_hotkey:
-    #             self.__ready_state = -1
-    #             return False
+    def __onPressForReady(self, key):
+        global _pressed
+        start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
+        cancel_hotkey = self.__hotkeys[self.Hotkey.CANCEL].getHotkeyCombo()
+        key_code = toKeyCode(key)
+        if key_code in start_hotkey or key_code in cancel_hotkey:
+            _pressed.add(key_code)
+            if _pressed == start_hotkey:
+                self.__state[self.__ready_state] = True
+                self.__ready_state = -1
+                return False
+            elif _pressed == cancel_hotkey:
+                self.__ready_state = -1
+                return False
             
             
-    # def __onReleaseForReady(self, key):
-    #     global _pressed
-    #     start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
-    #     cancel_hotkey = self.__hotkeys[self.Hotkey.CANCEL].getHotkeyCombo()
-        
-    #     if key in _pressed:
-    #         _pressed.remove(key)
+    def __onReleaseForReady(self, key):
+        global _pressed
+        if key in _pressed:
+            _pressed.remove(key)
             
     # def __onPressForRecord(self, key):
     #     start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
@@ -416,31 +359,31 @@ def isButton(button) -> bool:
     #     if not self.__state[self.State.RECORDING] and key not in start_hotkey and key not in cancel_hotkey:
     #         return
         
-    #     if key in self.__pressed:
+    #     if key in self._pressed:
     #         return
 
     #     if self.__state[self.State.RECORDING] and self.InputOption.KEYBOARD in self.__input_option:
     #         self.__setTime()
-    #         __log.info("Pressed {0}".format(key))
+    #         _log.info("Pressed {0}".format(key))
     #         self.__record.append(self.__delay)
     #         self.__record.append(key)
     #         if key in stop_hotkey:
-    #             __log.debug("Stored hotkey position {0}".format(len(self.__record)-1))
+    #             _log.debug("Stored hotkey position {0}".format(len(self.__record)-1))
     #             self.__hotkey_pos_in_record[key] = len(self.__record)-1
             
-    #     self.__pressed.add(key)
+    #     self._pressed.add(key)
         
-    #     if not self.__state[self.State.RECORDING] and self.__pressed == cancel_hotkey:
+    #     if not self.__state[self.State.RECORDING] and self._pressed == cancel_hotkey:
     #         print("[END] Recording has been cancelled")
     #         return False
             
-    #     if not self.__state[self.State.RECORDING] and self.__pressed == start_hotkey:
+    #     if not self.__state[self.State.RECORDING] and self._pressed == start_hotkey:
     #         self.__state[self.State.RECORDING] = True
-    #         self.__pressed.clear()
-            # self.__prev_mouse_pos = __mouse.position
+    #         self._pressed.clear()
+            # self.__prev_mouse_pos = _mouse.position
     #         print("[START] Recording input, press 'ctrl + shift' to end record")
-    #         self.__start = __time.__time()
-    #     elif self.__state[self.State.RECORDING] and self.__pressed == stop_hotkey:
+    #         self.__start = _time._time()
+    #     elif self.__state[self.State.RECORDING] and self._pressed == stop_hotkey:
     #         self.__state[self.State.RECORDING] = False
     #         self.__removeHotkeyFromRecord()
     #         print("[END] Recording has finished")
@@ -453,16 +396,16 @@ def isButton(button) -> bool:
     #     if not self.__state[self.State.RECORDING] and key_code not in start_hotkey:
     #         return
         
-    #     if key_code not in self.__pressed:
+    #     if key_code not in self._pressed:
     #         return
 
     #     if self.__state[self.State.RECORDING] and self.InputOption.KEYBOARD in self.__input_option:
     #         self.__setTime()
-    #         __log.info("Released {0}".format(key))
+    #         _log.info("Released {0}".format(key))
     #         self.__record.append(self.__delay)
     #         self.__record.append(key_code)
         
-    #     self.__pressed.remove(key_code)
+    #     self._pressed.remove(key_code)
         
     # def __onPressForPlay(self, key):
     #     key_code = self.keyToInt(key)
@@ -473,21 +416,21 @@ def isButton(button) -> bool:
     #     if key_code not in start_hotkey and key_code not in stop_hotkey and key_code not in cancel_hotkey:
     #         return
         
-    #     if key_code in self.__pressed:
+    #     if key_code in self._pressed:
     #         return
         
-    #     self.__pressed.add(key_code)
+    #     self._pressed.add(key_code)
         
-    #     if not self.__state[self.State.PLAYING] and self.__pressed == cancel_hotkey:
+    #     if not self.__state[self.State.PLAYING] and self._pressed == cancel_hotkey:
     #         print("[END] Playback has been cancelled")
     #         return False
         
-    #     if not self.__state[self.State.PLAYING] and self.__pressed == start_hotkey:
+    #     if not self.__state[self.State.PLAYING] and self._pressed == start_hotkey:
     #         self.__state[self.State.PLAYING] = True
-    #         self.__pressed.clear()
+    #         self._pressed.clear()
     #         print("[START] Playing record, press `ctrl + shift` to end playback")
     #         return False
-    #     elif self.__state[self.State.PLAYING] and self.__pressed == stop_hotkey:
+    #     elif self.__state[self.State.PLAYING] and self._pressed == stop_hotkey:
     #         self.__state[self.State.PLAYING] = False
     #         print("[END] Playback stopped")
     #         return False
@@ -495,10 +438,10 @@ def isButton(button) -> bool:
     # def __onReleaseForPlay(self, key):
     #     key_code = self.keyToInt(key)
         
-    #     if key_code not in self.__pressed:
+    #     if key_code not in self._pressed:
     #         return
         
-    #     self.__pressed.remove(key_code)
+    #     self._pressed.remove(key_code)
 
     # Mouse listeners
     # def __on_move(self, x, y):
@@ -516,7 +459,7 @@ def isButton(button) -> bool:
     #         self.__record.append(tup)
     #         self.__mouse_move_counter = 0
     #         self.__prev_mouse_pos = (x, y)
-    #         __log.info("Moved __mouse to position ({0}, {1})".format(x, y))
+    #         _log.info("Moved _mouse to position ({0}, {1})".format(x, y))
 
     # def __on_click(self, x, y, button, pressed):
     #     if self.InputOption.MOUSE not in self.__input_option:
@@ -526,7 +469,7 @@ def isButton(button) -> bool:
     #         return
         
     #     self.__setTime()
-    #     __log.info("{0} {1}".format("Pressed" if pressed else "Released", button))
+    #     _log.info("{0} {1}".format("Pressed" if pressed else "Released", button))
     #     self.__record.append(self.__delay)
     #     self.__record.append(self.mouseToStr(button))
             
@@ -540,46 +483,46 @@ def isButton(button) -> bool:
     #     self.__setTime()
     #     self.__record.append(self.__delay)
     #     if dy < 0:
-    #         __log.info("Scrolled down")
+    #         _log.info("Scrolled down")
     #         self.__record.append("d")
     #     else:
-    #         __log.info("Scrolled up")
+    #         _log.info("Scrolled up")
     #         self.__record.append("u")
     
     # Methods
-    # def record(self, option={InputOption.MOUSE, InputOption.KEYBOARD}):
-    #     global _pressed
-    #     if not option:
-    #         return
+    def record(self, option={InputOption.MOUSE, InputOption.KEYBOARD}):
+        global _pressed
+        if not option:
+            return
         
-    #     self.__record.clear()
-    #     self.__input_option = option
+        self.__record.clear()
+        self.__input_option = option
         
-    #     print("[READY] Press '{0}' to start recording or press '{1}' to cancel".format(self.__hotkeys[self.Hotkey.START].getHotkeyName(), self.__hotkeys[self.Hotkey.CANCEL].getHotkeyName()))
-    #     self.__ready_state = self.State.RECORDING
-    #     with __keyboard.Listener(on_press=self.__onPressForReady, on_release=self.__onReleaseForReady) as listener:
-    #         listener.join()
+        print("[READY] Press '{0}' to start recording or press '{1}' to cancel".format(self.__hotkeys[self.Hotkey.START].getHotkeyName(), self.__hotkeys[self.Hotkey.CANCEL].getHotkeyName()))
+        self.__ready_state = self.State.RECORDING
+        with _keyboard.Listener(on_press=self.__onPressForReady, on_release=self.__onReleaseForReady) as listener:
+            listener.join()
         
-    #     _pressed.clear()
-    #     print("done")
-    #     if self.__state[self.State.RECORDING]:
-    #         print("recording")
-        # with __mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
-        #     with __keyboard.Listener(on_press=self.__onPressForRecord, on_release=self.__onReleaseForRecord) as listener:
+        _pressed.clear()
+        print("done")
+        if self.__state[self.State.RECORDING]:
+            print("recording")
+        # with _mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
+        #     with _keyboard.Listener(on_press=self.__onPressForRecord, on_release=self.__onReleaseForRecord) as listener:
         #         listener.join() 
                 
     # def play(self, loop=1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
-    #     keyboard_controller = __keyboard.Controller()
-    #     mouse_controller = __mouse.Controller()
+    #     keyboard_controller = _keyboard.Controller()
+    #     mouse_controller = _mouse.Controller()
         
     #     print("[READY] Press 'ctrl + shift' to start playback or press 'ctrl + z' to cancel")
-    #     with __keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay) as listener:
+    #     with _keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay) as listener:
     #         listener.join()
         
     #     if not self.__state[self.State.PLAYING]:
     #         return
         
-    #     key_listener = __keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay)
+    #     key_listener = _keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay)
     #     key_listener.start()
         
     #     length = len(self.__record)
@@ -587,43 +530,43 @@ def isButton(button) -> bool:
     #     loop_count = 0
     #     while self.__state[self.State.PLAYING] and (loop < 0 or loop_count < loop):
     #         val = self.__record[i]
-    #         if type(val) is int: # __keyboard
+    #         if type(val) is int: # _keyboard
     #             key_code = self.intToKey(val)
-    #             if key_code in self.__pressed:
-    #                 __log.info("Releasing " + str(key_code))
+    #             if key_code in self._pressed:
+    #                 _log.info("Releasing " + str(key_code))
     #                 keyboard_controller.release(key_code)
-    #                 self.__pressed.remove(key_code)
+    #                 self._pressed.remove(key_code)
     #             else:
-    #                 __log.info("Pressing " + str(key_code))
+    #                 _log.info("Pressing " + str(key_code))
     #                 keyboard_controller.press(key_code)
-    #                 self.__pressed.add(key_code)
+    #                 self._pressed.add(key_code)
     #         elif type(val) is float: # delay
-    #             __time.sleep(self.__speedUp(val, speed))
-    #         elif type(val) is str: # __mouse buttons & scroll
+    #             _time.sleep(self.__speedUp(val, speed))
+    #         elif type(val) is str: # _mouse buttons & scroll
     #             if val == 'l' or val == 'm' or val == 'r':
-    #                 if val in self.__pressed:
-    #                     __log.info("Releasing " + val)
+    #                 if val in self._pressed:
+    #                     _log.info("Releasing " + val)
     #                     mouse_controller.release(self.strToMouse(val))
-    #                     self.__pressed.remove(val)
+    #                     self._pressed.remove(val)
     #                 else:
-    #                     __log.info("Pressing " + val)
+    #                     _log.info("Pressing " + val)
     #                     mouse_controller.press(self.strToMouse(val))
-    #                     self.__pressed.add(val)
+    #                     self._pressed.add(val)
     #             elif val == 'u' or val == 'd':
     #                 mouse_controller.scroll(0, self.scrollStrToInt(val))
-    #         else: # __mouse movement
+    #         else: # _mouse movement
     #             if mouse_movement == self.MouseMovement.RELATIVE:
-    #                 current_mouse_pos = tuple(__mouse.position)
+    #                 current_mouse_pos = tuple(_mouse.position)
     #                 rel_x = current_mouse_pos[0] + (val[2][0] - val[0][0])
     #                 rel_y = current_mouse_pos[1] + (val[2][1] - val[0][1])
-    #                 __time.sleep(self.__speedUp(val[1], speed))
+    #                 _time.sleep(self.__speedUp(val[1], speed))
     #                 mouse_controller.position = (rel_x, rel_y)
-    #                 __log.info("Moved __mouse to position ({0}, {1})".format(rel_x, rel_y))
+    #                 _log.info("Moved _mouse to position ({0}, {1})".format(rel_x, rel_y))
     #             else:
     #                 mouse_controller.position = (val[0][0], val[0][1])
-    #                 __time.sleep(self.__speedUp(val[1], speed))
+    #                 _time.sleep(self.__speedUp(val[1], speed))
     #                 mouse_controller.position = (val[2][0], val[2][1])
-    #                 __log.info("Moved __mouse to position ({0}, {1})".format(val[2][0], val[2][1]))
+    #                 _log.info("Moved _mouse to position ({0}, {1})".format(val[2][0], val[2][1]))
     #         i += 1
     #         if i >= length and (loop < 0 or loop_count < loop):
     #             i = 0
@@ -634,7 +577,7 @@ def isButton(button) -> bool:
     #         self.__state[self.State.PLAYING] = False
     #         print("[END] Playback finished")
          
-    #     self.__pressed.clear()
+    #     self._pressed.clear()
     
     # def __show_key(self, key):
     #     try:
@@ -644,11 +587,11 @@ def isButton(button) -> bool:
     #     print(str(key) + " | " + str(key_code))
         
     # def test(self):
-    #     listener = __keyboard.Listener(on_press=self.__show_key)
+    #     listener = _keyboard.Listener(on_press=self.__show_key)
     #     listener.start()
     #     try:
     #         while listener.is_alive():
-    #             __time.sleep(1)
+    #             _time.sleep(1)
     #     except KeyboardInterrupt:
     #         listener.stop()
                 
@@ -656,37 +599,37 @@ def isButton(button) -> bool:
     #     for i in range(len(self.__record)):
     #         val = self.__record[i]
     #         if type(val) == int:
-    #             if val in self.__pressed:
+    #             if val in self._pressed:
     #                 print("[{0}] Released {1}".format(i, val))
-    #                 self.__pressed.remove(val)
+    #                 self._pressed.remove(val)
     #             else:
     #                 print("[{0}] Pressed {1}".format(i, val))
-    #                 self.__pressed.add(val)
+    #                 self._pressed.add(val)
     #         elif type(val) == float:
     #             print("[{0}] Delay {1}s".format(i, val))
     #         elif type(val) == str:
     #             if val == 'l' or val == 'm' or val == 'r':
-    #                 if val in self.__pressed: 
+    #                 if val in self._pressed: 
     #                     print("[{0}] Released {1}".format(i, val))
-    #                     self.__pressed.remove(val)
+    #                     self._pressed.remove(val)
     #                 else:
     #                     print("[{0}] Pressed {1}".format(i, val))
-    #                     self.__pressed.add(val)
+    #                     self._pressed.add(val)
     #             elif val == 'u' or val == 'd':
     #                 print("[{0}] Scrolled {1}".format(i, "down" if val == "d" else "up"))
     #         else:
     #             print("[{0}] {1}".format(i, val))
     #     print("Length: {0}".format(len(self.__record)))
-    #     self.__pressed.clear()
+    #     self._pressed.clear()
             
     # def printTypes(self):
     #     for i in self.__record:
     #         print(type(i))
         
 # def strToJson(s: str) -> str:
-#     if s.endswith(".__json"):
+#     if s.endswith("._json"):
 #         return s
-#     return s + ".__json"
+#     return s + "._json"
 
 # def strToMouseMovement(s: str):
 #     s = s.lower()
@@ -696,16 +639,16 @@ def isButton(button) -> bool:
 #         return Recorder.MouseMovement.RELATIVE
 
 # def addRecord(args, record_dir):
-#     record_dir = __path(record_dir)
+#     record_dir = _path(record_dir)
 #     if not record_dir.exists():
 #         record_dir.mkdir(parents=True)
         
 #     input = Recorder()
 #     input_option = set()
 #     record_name = strToJson(args.record)
-#     if args.__mouse:
+#     if args._mouse:
 #         input_option.add(Recorder.InputOption.MOUSE)
-#     if args.__keyboard:
+#     if args._keyboard:
 #         input_option.add(Recorder.InputOption.KEYBOARD)
     
 #     if not input_option:
@@ -717,7 +660,7 @@ def isButton(button) -> bool:
 #         input.saveRecordToJson(record_dir.joinpath(record_name))
     
 # def removeRecord(args, record_dir):
-#     record_dir = __path(record_dir)
+#     record_dir = _path(record_dir)
 #     files = args.record
 #     for i in files:  
 #         file = record_dir.joinpath(strToJson(i))
@@ -726,7 +669,7 @@ def isButton(button) -> bool:
 #             print("[SUCCESS] Deleted record {0}".format(file.stem))
     
 # def listRecords(path):
-#     path = __path(path)
+#     path = _path(path)
 #     if not path.exists():
 #         print("[ERROR] Record directory does not exist")
 #         return
@@ -737,7 +680,7 @@ def isButton(button) -> bool:
 #         print("  " + file.stem)
         
 # def playRecord(args, record_dir):
-#     record_dir = __path(record_dir)
+#     record_dir = _path(record_dir)
 #     input = Recorder()
 #     record_name = str(record_dir.joinpath(strToJson(args.record)))
 #     input.getRecordFromJson(record_name)
@@ -745,22 +688,21 @@ def isButton(button) -> bool:
     
 # def readConfig(config_path) -> dict:
 #     with open(config_path, 'r') as file:
-#         data = __json.load(file)
+#         data = _json.load(file)
 #     return data
 
 # def writeConfig(config, config_path):
-#     data = __json.dumps(config, indent=4)
+#     data = _json.dumps(config, indent=4)
 #     with open(config_path, 'w') as file:
 #         file.write(data)
 
 def main():
-    current_dir = __path(__file__).parent.resolve()
-    config_path = current_dir.joinpath("config.__json")
+    current_dir = _path(__file__).parent.resolve()
+    config_path = current_dir.joinpath("config._json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    print(type(toCode(__keyboard.KeyCode.from_vk(65))))
-    print(Hotkey.join(["ctrl", "shift"]))
-    print(toString(65))
+    #print(__convertKeyCode(_keyboard.KeyCode.from_char('a')))
+    print(toKeyCode([_keyboard.KeyCode.from_vk(162), _keyboard.KeyCode.from_char('a')]))
     # if not config_path.exists():
     #     writeConfig(config, config_path)
     # else:
@@ -780,8 +722,8 @@ def main():
     # # record add
     # cmd_record_add = record_subparser.add_parser("add", help="add a new record")
     # cmd_record_add.add_argument("record", type=str)
-    # cmd_record_add.add_argument("-m", "--__mouse", action="store_true", dest="__mouse", help="enable __mouse when recording")
-    # cmd_record_add.add_argument("-k", "--__keyboard", action="store_true", dest="__keyboard", help="enable __keyboard when recording")
+    # cmd_record_add.add_argument("-m", "--_mouse", action="store_true", dest="_mouse", help="enable _mouse when recording")
+    # cmd_record_add.add_argument("-k", "--_keyboard", action="store_true", dest="_keyboard", help="enable _keyboard when recording")
     
     # # record remove
     # cmd_record_remove = record_subparser.add_parser("remove", help="delete record(s)")
@@ -796,7 +738,7 @@ def main():
     # cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
     # cmd_play.add_argument("--loop", nargs='?', type=int, default=1, const=-1, dest="loop", help="loop playback")
     # cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
-    # cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of __mouse movement to use (absolute or relative)")
+    # cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of _mouse movement to use (absolute or relative)")
     
     # # config
     # cmd_config = subparser.add_parser("config", help="config settings")
@@ -847,8 +789,8 @@ def main():
 if __name__ == "__main__":
     main()
     
-# __keyboard = int
-# __time = float
+# _keyboard = int
+# _time = float
 # scroll = str(u | d)
-# __mouse movement = tuple(3)
-# __mouse button = str(l | m | r)
+# _mouse movement = tuple(3)
+# _mouse button = str(l | m | r)
