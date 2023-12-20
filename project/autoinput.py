@@ -118,18 +118,19 @@ def __convertKeyCode(char_key: _keyboard.KeyCode):
         return __keys[key_code]
     return key_code
     
-def toString(key_code):
+def toString(input) -> str:
     global __keys
-    t = type(key_code)
-    keys = []
+    t = type(input)
+    inputs = []
     if t == list:
-        keys += key_code
+        inputs += input
     else:
-        keys.append(key_code)
+        inputs.append(input)
     
     global __keys
+    global __buttons
     names = []
-    for i in keys:
+    for i in inputs:
         t = type(i)
         if t == int:
             names.append(__keys.inverse[i])
@@ -137,6 +138,8 @@ def toString(key_code):
             names.append(__keys.inverse[i.value.vk])
         elif t == _keyboard.KeyCode:
             names.append(__keys.inverse[__convertKeyCode(i)])
+        elif t == _mouse.Button:
+            names.append(__buttons.inverse[i])
         else:
             raise TypeError
     return Hotkey.join(names)
@@ -191,6 +194,10 @@ def toKey(key, force_list_return_type=False):
     if not force_list_return_type and len(keys) == 1:
         return keys[0]
     return keys
+
+def toButton(button: str):
+    global __buttons
+    return __buttons[button]
 
 def isKeyString(key: str) -> bool:
     global __keys
@@ -258,7 +265,6 @@ class Recorder:
         
         # Helper variables
         self.__ready_state = -1 
-        self.__prev_mouse_pos = (-1, -1)
         self.__mouse_move_counter = 0 # count the number of pixels the mouse has moved
         self.__start = 0 # start time
         self.__end = 0 # end time
@@ -428,50 +434,43 @@ class Recorder:
     #     self._pressed.remove(key_code)
 
     # Mouse listeners
-    # def __on_move(self, x, y):
-    #     if self.InputOption.MOUSE not in self.__input_option:
-    #         return 
+    def __onMoveForRecord(self, x, y):
+        if self.InputOption.MOUSE not in self.__input_option:
+            return 
         
-    #     if not self.__state[self.State.RECORDING]:
-    #         return
-        
-    #     if self.__mouse_move_counter < 10:
-    #         self.__mouse_move_counter += 1
-    #     else:
-    #         self.__setTime()
-    #         tup = (tuple(self.__prev_mouse_pos), self.__delay, (x, y))
-    #         self.__record.append(tup)
-    #         self.__mouse_move_counter = 0
-    #         self.__prev_mouse_pos = (x, y)
-    #         _log.info("Moved _mouse to position ({0}, {1})".format(x, y))
+        if self.__mouse_move_counter < 10:
+            self.__mouse_move_counter += 1
+        else:
+            self.__setTime()
+            self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
+            self.__record.append(tuple([self.InputType.MOVE, (x, y)]))
+            self.__mouse_move_counter = 0
+            _log.info("Moved mouse to position ({0}, {1})".format(x, y))
 
-    # def __on_click(self, x, y, button, pressed):
-    #     if self.InputOption.MOUSE not in self.__input_option:
-    #         return 
+    def __onClickForRecord(self, x, y, button, pressed):
+        if self.InputOption.MOUSE not in self.__input_option:
+            return 
         
-    #     if not self.__state[self.State.RECORDING]:
-    #         return
-        
-    #     self.__setTime()
-    #     _log.info("{0} {1}".format("Pressed" if pressed else "Released", button))
-    #     self.__record.append(self.__delay)
-    #     self.__record.append(self.mouseToStr(button))
+        self.__setTime()
+        _log.info("{0} {1}".format("Pressed" if pressed else "Released", button))
+        self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
+        self.__record.append(self.mouseToStr(button))
             
-    # def __on_scroll(self, x, y, dx, dy):
-    #     if self.InputOption.MOUSE not in self.__input_option:
-    #         return 
+    def __onScrollForRecord(self, x, y, dx, dy):
+        if self.InputOption.MOUSE not in self.__input_option:
+            return 
         
-    #     if not self.__state[self.State.RECORDING]:
-    #         return
+        if not self.__state[self.State.RECORDING]:
+            return
         
-    #     self.__setTime()
-    #     self.__record.append(self.__delay)
-    #     if dy < 0:
-    #         _log.info("Scrolled down")
-    #         self.__record.append("d")
-    #     else:
-    #         _log.info("Scrolled up")
-    #         self.__record.append("u")
+        self.__setTime()
+        self.__record.append(self.__delay)
+        if dy < 0:
+            _log.info("Scrolled down")
+            self.__record.append("d")
+        else:
+            _log.info("Scrolled up")
+            self.__record.append("u")
     
     # Methods
     def record(self, option={InputOption.MOUSE, InputOption.KEYBOARD}):
@@ -494,10 +493,13 @@ class Recorder:
             return
         
         print("[START] Press '{0}' to end recording".format(self.__hotkeys[self.Hotkey.STOP].getHotkeyName()))
-        # with _mouse.Listener(on_move=self.__on_move, on_click=self.__on_click, on_scroll=self.__on_scroll) as listener:
-        with _keyboard.Listener(on_press=self.__onPressForRecord, on_release=self.__onReleaseForRecord) as listener:
-            self.__start = _time.time()
-            listener.join() 
+        with _mouse.Listener(on_move=self.__onMoveForRecord, on_click=self.__onClickForRecord, on_scroll=self.__onScrollForRecord) as listener:
+            with _keyboard.Listener(on_press=self.__onPressForRecord, on_release=self.__onReleaseForRecord) as listener:
+                self.__start = _time.time()
+                listener.join() 
+                
+        _pressed.clear()
+        self.__state[self.State.RECORDING] = False
                 
     # def play(self, loop=1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
     #     keyboard_controller = _keyboard.Controller()
@@ -590,6 +592,10 @@ class Recorder:
                 print("[{0}] Key: {1}".format(i, val[1]))
             elif val[0] == self.InputType.BUTTON:
                 print("[{0}] Button: {1}".format(i, val[1]))
+            elif val[0] == self.InputType.MOVE:
+                print("[{0}] Moved mouse to: ({1}, {2})".format(i, val[1][0], val[1][1]))
+            # elif val[0] == self.InputType.SCROLL:
+            #     print("[{0}] Scroll: {1}")
             elif val[0] == self.InputType.DELAY:
                 print("[{0}] Delay: {1}s".format(i, val[1]))    
         print("Length: {0}".format(len(self.__record)))

@@ -22,6 +22,8 @@ class TestAutoInput(unittest.TestCase):
         self.assertEqual(toString([162, 160]), "ctrl + shift")
         self.assertEqual(toString([keyboard.KeyCode.from_vk(162), keyboard.KeyCode.from_vk(160)]), "ctrl + shift")
         self.assertEqual(toString([keyboard.KeyCode.from_vk(162), keyboard.KeyCode.from_char('a')]), "ctrl + a")
+        self.assertEqual(toString(mouse.Button.left), "LMB")
+        self.assertEqual(toString(mouse.Button.right), "RMB")
         
     def test_toKeyCode(self):
         self.assertEqual(toKeyCode("ctrl"), 162)
@@ -45,6 +47,10 @@ class TestAutoInput(unittest.TestCase):
         self.assertEqual(toKey("ctrl+shift"), [keyboard.KeyCode.from_vk(162), keyboard.KeyCode.from_vk(160)])
         self.assertEqual(toKey([162, 160]), [keyboard.KeyCode.from_vk(162), keyboard.KeyCode.from_vk(160)])
         self.assertEqual(toKey([keyboard.KeyCode.from_vk(162), keyboard.KeyCode.from_vk(160)]), [keyboard.KeyCode.from_vk(162), keyboard.KeyCode.from_vk(160)])
+        
+    def test_toButton(self):
+        self.assertEqual(toButton("LMB"), mouse.Button.left)
+        self.assertEqual(toButton("RMB"), mouse.Button.right)
         
     def test_isKey(self):
         self.assertEqual(isKey(keyboard.Key.shift_r), True)
