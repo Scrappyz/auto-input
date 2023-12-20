@@ -451,26 +451,37 @@ class Recorder:
         if self.InputOption.MOUSE not in self.__input_option:
             return 
         
+        global _pressed
+        button_string = toString(button)
+        
+        in_pressed = button_string in _pressed
+        if pressed:
+            if not in_pressed:
+                _pressed.add(button_string)
+            else:
+                return
+        else:
+            if in_pressed:
+                _pressed.remove(button_string)
+            else:
+                return
+        
         self.__setTime()
         _log.info("{0} {1}".format("Pressed" if pressed else "Released", button))
         self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
-        self.__record.append(self.mouseToStr(button))
+        self.__record.append(tuple([self.InputType.BUTTON, button_string]))
             
     def __onScrollForRecord(self, x, y, dx, dy):
         if self.InputOption.MOUSE not in self.__input_option:
             return 
         
-        if not self.__state[self.State.RECORDING]:
-            return
-        
         self.__setTime()
-        self.__record.append(self.__delay)
+        self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
+        self.__record.append(tuple([self.InputType.SCROLL, dy]))
         if dy < 0:
             _log.info("Scrolled down")
-            self.__record.append("d")
         else:
             _log.info("Scrolled up")
-            self.__record.append("u")
     
     # Methods
     def record(self, option={InputOption.MOUSE, InputOption.KEYBOARD}):
@@ -594,8 +605,8 @@ class Recorder:
                 print("[{0}] Button: {1}".format(i, val[1]))
             elif val[0] == self.InputType.MOVE:
                 print("[{0}] Moved mouse to: ({1}, {2})".format(i, val[1][0], val[1][1]))
-            # elif val[0] == self.InputType.SCROLL:
-            #     print("[{0}] Scroll: {1}")
+            elif val[0] == self.InputType.SCROLL:
+                print("[{0}] Scroll {1}".format(i, "up" if val[1] > 0 else "down"))
             elif val[0] == self.InputType.DELAY:
                 print("[{0}] Delay: {1}s".format(i, val[1]))    
         print("Length: {0}".format(len(self.__record)))
