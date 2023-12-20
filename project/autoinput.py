@@ -397,41 +397,29 @@ class Recorder:
         self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
         self.__record.append(tuple([self.InputType.KEY, key_string]))
         
-    # def __onPressForPlay(self, key):
-    #     key_code = self.keyToInt(key)
-    #     start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
-    #     stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
-    #     cancel_hotkey = self.__hotkeys[self.Hotkey.CANCEL].getHotkeyCombo()
+    def __onPressForPlay(self, key):
+        global _pressed
+        key_code = toKeyCode(key)
         
-    #     if key_code not in start_hotkey and key_code not in stop_hotkey and key_code not in cancel_hotkey:
-    #         return
+        if key_code in _pressed:
+            return
         
-    #     if key_code in self._pressed:
-    #         return
+        stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
+        _pressed.add(key_code)
         
-    #     self._pressed.add(key_code)
-        
-    #     if not self.__state[self.State.PLAYING] and self._pressed == cancel_hotkey:
-    #         print("[END] Playback has been cancelled")
-    #         return False
-        
-    #     if not self.__state[self.State.PLAYING] and self._pressed == start_hotkey:
-    #         self.__state[self.State.PLAYING] = True
-    #         self._pressed.clear()
-    #         print("[START] Playing record, press `ctrl + shift` to end playback")
-    #         return False
-    #     elif self.__state[self.State.PLAYING] and self._pressed == stop_hotkey:
-    #         self.__state[self.State.PLAYING] = False
-    #         print("[END] Playback stopped")
-    #         return False
+        if _pressed == stop_hotkey:
+            self.__state[self.State.PLAYING] = False
+            print("[END] Playback stopped")
+            return False
                 
-    # def __onReleaseForPlay(self, key):
-    #     key_code = self.keyToInt(key)
+    def __onReleaseForPlay(self, key):
+        global _pressed
+        key_code = toKeyCode(key)
         
-    #     if key_code not in self._pressed:
-    #         return
-        
-    #     self._pressed.remove(key_code)
+        if key_code not in _pressed:
+            return
+    
+        _pressed.remove(key_code)
 
     # Mouse listeners
     def __onMoveForRecord(self, x, y):
@@ -512,73 +500,63 @@ class Recorder:
         _pressed.clear()
         self.__state[self.State.RECORDING] = False
                 
-    # def play(self, loop=1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
-    #     keyboard_controller = _keyboard.Controller()
-    #     mouse_controller = _mouse.Controller()
+    def play(self, loop=-1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
+        keyboard_controller = _keyboard.Controller()
+        mouse_controller = _mouse.Controller()
         
-    #     print("[READY] Press 'ctrl + shift' to start playback or press 'ctrl + z' to cancel")
-    #     with _keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay) as listener:
-    #         listener.join()
+        self.__ready_state = self.State.PLAYING
+        print("[READY] Press '{0}' to start playback or press '{1}' to cancel".format(self.__hotkeys[self.Hotkey.START].getHotkeyName(), self.__hotkeys[self.Hotkey.CANCEL].getHotkeyName()))
+        with _keyboard.Listener(on_press=self.__onPressForReady, on_release=self.__onReleaseForReady) as listener:
+            listener.join()
         
-    #     if not self.__state[self.State.PLAYING]:
-    #         return
+        if not self.__state[self.State.PLAYING]:
+            return
         
-    #     key_listener = _keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay)
-    #     key_listener.start()
+        key_listener = _keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay)
+        key_listener.start()
         
-    #     length = len(self.__record)
-    #     i = 0
-    #     loop_count = 0
-    #     while self.__state[self.State.PLAYING] and (loop < 0 or loop_count < loop):
-    #         val = self.__record[i]
-    #         if type(val) is int: # _keyboard
-    #             key_code = self.intToKey(val)
-    #             if key_code in self._pressed:
-    #                 _log.info("Releasing " + str(key_code))
-    #                 keyboard_controller.release(key_code)
-    #                 self._pressed.remove(key_code)
-    #             else:
-    #                 _log.info("Pressing " + str(key_code))
-    #                 keyboard_controller.press(key_code)
-    #                 self._pressed.add(key_code)
-    #         elif type(val) is float: # delay
-    #             _time.sleep(self.__speedUp(val, speed))
-    #         elif type(val) is str: # _mouse buttons & scroll
-    #             if val == 'l' or val == 'm' or val == 'r':
-    #                 if val in self._pressed:
-    #                     _log.info("Releasing " + val)
-    #                     mouse_controller.release(self.strToMouse(val))
-    #                     self._pressed.remove(val)
-    #                 else:
-    #                     _log.info("Pressing " + val)
-    #                     mouse_controller.press(self.strToMouse(val))
-    #                     self._pressed.add(val)
-    #             elif val == 'u' or val == 'd':
-    #                 mouse_controller.scroll(0, self.scrollStrToInt(val))
-    #         else: # _mouse movement
-    #             if mouse_movement == self.MouseMovement.RELATIVE:
-    #                 current_mouse_pos = tuple(_mouse.position)
-    #                 rel_x = current_mouse_pos[0] + (val[2][0] - val[0][0])
-    #                 rel_y = current_mouse_pos[1] + (val[2][1] - val[0][1])
-    #                 _time.sleep(self.__speedUp(val[1], speed))
-    #                 mouse_controller.position = (rel_x, rel_y)
-    #                 _log.info("Moved _mouse to position ({0}, {1})".format(rel_x, rel_y))
-    #             else:
-    #                 mouse_controller.position = (val[0][0], val[0][1])
-    #                 _time.sleep(self.__speedUp(val[1], speed))
-    #                 mouse_controller.position = (val[2][0], val[2][1])
-    #                 _log.info("Moved _mouse to position ({0}, {1})".format(val[2][0], val[2][1]))
-    #         i += 1
-    #         if i >= length and (loop < 0 or loop_count < loop):
-    #             i = 0
-    #             loop_count += 1
+        pressed_in_playback = set()
+        prev_mouse_pos = (-1, -1)
+        length = len(self.__record)
+        i = 0
+        loop_count = 0
+        while self.__state[self.State.PLAYING] and (loop < 0 or loop_count < loop):
+            val = self.__record[i]
+            if val[0] == self.InputType.DELAY:
+                _time.sleep(self.__speedUp(val[1], speed))
+            elif val[0] == self.InputType.MOVE:
+                if mouse_movement == self.MouseMovement.RELATIVE:
+                    current_pos = mouse_controller.position
+                    mouse_controller.move(val[1][0] - current_pos[0], val[1][1] - current_pos[1])
+                else:
+                    mouse_controller.position = (val[1][0], val[1][1])
+            elif val[0] == self.InputType.KEY:
+                if val[1] not in pressed_in_playback:
+                    pressed_in_playback.add(val[1])
+                    keyboard_controller.press(toKey(val[1]))
+                else:
+                    pressed_in_playback.remove(val[1])
+                    keyboard_controller.release(toKey(val[1]))
+            elif val[0] == self.InputType.SCROLL:
+                mouse_controller.scroll(val[1])
+            elif val[0] == self.InputType.BUTTON:
+                if val[1] not in pressed_in_playback:
+                    pressed_in_playback.add(val[1])
+                    mouse_controller.press(toButton(val[1]))
+                else:
+                    pressed_in_playback.remove(val[1])
+                    mouse_controller.release(toButton(val[1]))
+            i += 1
+            if i >= length and (loop < 0 or loop_count < loop):
+                i = 0
+                loop_count += 1
                 
-    #     key_listener.stop()
-    #     if self.__state[self.State.PLAYING] == True:
-    #         self.__state[self.State.PLAYING] = False
-    #         print("[END] Playback finished")
+        key_listener.stop()
+        if self.__state[self.State.PLAYING]:
+            self.__state[self.State.PLAYING] = False
+            print("[END] Playback finished")
          
-    #     self._pressed.clear()
+        _pressed.clear()
     
     # def __show_key(self, key):
     #     try:
@@ -693,6 +671,7 @@ def main():
     input = Recorder()
     input.record()
     input.printRecord()
+    input.play()
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
