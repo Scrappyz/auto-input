@@ -91,10 +91,14 @@ class Hotkey:
                 continue
             
             if key:
+                if not isKeyString(key):
+                    raise KeyError("Unknown Key: '{0}'".format(key))
                 keys.append(key)
                 key = ""
         
         if key:
+            if not isKeyString(key):
+                raise KeyError("Unknown Key: '{0}'".format(key))
             keys.append(key)
         return keys
     
@@ -704,8 +708,7 @@ def main():
     config_path = current_dir.joinpath("config._json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
 
-    input = Recorder(stop_hotkey="ctrl + alt", cancel_hotkey="ctrl + x")
-    input.record()
+    print(Hotkey.parse("ctrl + shift"))
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
