@@ -259,14 +259,13 @@ class Recorder:
     
     def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="", stop_hotkey="ctrl+shift", cancel_hotkey="ctrl+z"):
         self.__record = []
-        self.__state = [False, False, False]
+        self.__states = [False, False, False]
         self.__hotkeys = [Hotkey(start_hotkey), Hotkey(pause_hotkey), Hotkey(stop_hotkey), Hotkey(cancel_hotkey)]
         self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
         
         # Helper variables
         self.__ready_state = -1 
         self.__mouse_move_counter = 0 # count the number of pixels the mouse has moved
-        self.__mouse_moved = False
         self.__start = 0 # start time
         self.__end = 0 # end time
         self.__delay = 0 # delay
@@ -342,7 +341,7 @@ class Recorder:
         if key_code in start_hotkey or key_code in cancel_hotkey:
             _pressed.add(key_code)
             if _pressed == start_hotkey:
-                self.__state[self.__ready_state] = True
+                self.__states[self.__ready_state] = True
                 self.__ready_state = -1
                 return False
             elif _pressed == cancel_hotkey:
@@ -409,7 +408,7 @@ class Recorder:
         _pressed.add(key_code)
         
         if _pressed == stop_hotkey:
-            self.__state[self.State.PLAYING] = False
+            self.__states[self.State.PLAYING] = False
             print("[END] Playback stopped")
             return False
                 
@@ -427,14 +426,15 @@ class Recorder:
         if self.InputOption.MOUSE not in self.__input_option:
             return 
         
-        if self.__mouse_move_counter < 1:
+        if self.__mouse_move_counter < 10:
             self.__mouse_move_counter += 1
         else:
+            mouse_pos = _mouse.Controller().position
             self.__setTime()
             self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
-            self.__record.append(tuple([self.InputType.MOVE, (x, y)]))
+            self.__record.append(tuple([self.InputType.MOVE, tuple([mouse_pos[0], mouse_pos[1]])]))
             self.__mouse_move_counter = 0
-            _log.info("Moved mouse to position ({0}, {1})".format(x, y))
+            _log.info("Moved mouse to position ({0}, {1})".format(mouse_pos[0], mouse_pos[1]))
 
     def __onClickForRecord(self, x, y, button, pressed):
         if self.InputOption.MOUSE not in self.__input_option:
@@ -488,7 +488,7 @@ class Recorder:
 
         _pressed.clear()
         
-        if not self.__state[self.State.RECORDING]:
+        if not self.__states[self.State.RECORDING]:
             print("[END] Recording cancelled")
             return
         
@@ -499,7 +499,7 @@ class Recorder:
                 listener.join() 
                 
         _pressed.clear()
-        self.__state[self.State.RECORDING] = False
+        self.__states[self.State.RECORDING] = False
                 
     def play(self, loop=-1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
         keyboard_controller = _keyboard.Controller()
@@ -510,7 +510,7 @@ class Recorder:
         with _keyboard.Listener(on_press=self.__onPressForReady, on_release=self.__onReleaseForReady) as listener:
             listener.join()
         
-        if not self.__state[self.State.PLAYING]:
+        if not self.__states[self.State.PLAYING]:
             return
         
         key_listener = _keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay)
@@ -521,7 +521,7 @@ class Recorder:
         length = len(self.__record)
         i = 0
         loop_count = 0
-        while self.__state[self.State.PLAYING] and (loop < 0 or loop_count < loop):
+        while self.__states[self.State.PLAYING] and (loop < 0 or loop_count < loop):
             val = self.__record[i]
             input_type = val[0]
             if input_type == self.InputType.DELAY:
@@ -559,11 +559,10 @@ class Recorder:
                 i = 0
                 loop_count += 1
                 prev_mouse_pos = (-1, -1)
-                print("=========END==========")
                 
         key_listener.stop()
-        if self.__state[self.State.PLAYING]:
-            self.__state[self.State.PLAYING] = False
+        if self.__states[self.State.PLAYING]:
+            self.__states[self.State.PLAYING] = False
             print("[END] Playback finished")
          
         _pressed.clear()
@@ -672,6 +671,17 @@ class Recorder:
 #     data = _json.dumps(config, indent=4)
 #     with open(config_path, 'w') as file:
 #         file.write(data)
+t = 0
+def onMove(x, y):
+    print("({0}, {1})".format(x, y))
+    global t
+    t += 1
+    if t == 10:
+        return False
+
+def testMouse():
+    with _mouse.Listener(on_move=onMove) as l:
+        l.join()
 
 def main():
     current_dir = _path(__file__).parent.resolve()
@@ -681,9 +691,8 @@ def main():
     input = Recorder()
     input.record()
     input.printRecord()
-    input.play(mouse_movement=Recorder.MouseMovement.ABSOLUTE)
-    # mouse = _mouse.Controller()
-    # # print("({0}, {1})".format(mouse.position[0], mouse.position[1]))
+    input.play(mouse_movement=Recorder.MouseMovement.RELATIVE)
+    # testMouse()
     # mouse.position = (25, 65)
     
     # if not config_path.exists():
