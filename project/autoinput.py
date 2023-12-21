@@ -266,6 +266,7 @@ class Recorder:
         # Helper variables
         self.__ready_state = -1 
         self.__mouse_move_counter = 0 # count the number of pixels the mouse has moved
+        self.__mouse_moved = False
         self.__start = 0 # start time
         self.__end = 0 # end time
         self.__delay = 0 # delay
@@ -426,7 +427,7 @@ class Recorder:
         if self.InputOption.MOUSE not in self.__input_option:
             return 
         
-        if self.__mouse_move_counter < 10:
+        if self.__mouse_move_counter < 1:
             self.__mouse_move_counter += 1
         else:
             self.__setTime()
@@ -522,9 +523,10 @@ class Recorder:
         loop_count = 0
         while self.__state[self.State.PLAYING] and (loop < 0 or loop_count < loop):
             val = self.__record[i]
-            if val[0] == self.InputType.DELAY:
+            input_type = val[0]
+            if input_type == self.InputType.DELAY:
                 _time.sleep(self.__speedUp(val[1], speed))
-            elif val[0] == self.InputType.MOVE:
+            elif input_type == self.InputType.MOVE:
                 if mouse_movement == self.MouseMovement.RELATIVE:
                     if prev_mouse_pos == (-1, -1):
                         prev_mouse_pos = val[1]
@@ -533,17 +535,19 @@ class Recorder:
                     mouse_controller.move(mouse_pos[0] - prev_mouse_pos[0], mouse_pos[1] - prev_mouse_pos[1])
                     prev_mouse_pos = mouse_pos
                 else:
+                    print("before: {0}".format(mouse_controller.position))
                     mouse_controller.position = (val[1][0], val[1][1])
-            elif val[0] == self.InputType.KEY:
+                    print("after: {0}".format(mouse_controller.position))
+            elif input_type == self.InputType.KEY:
                 if val[1] not in pressed_in_playback:
                     pressed_in_playback.add(val[1])
                     keyboard_controller.press(toKey(val[1]))
                 else:
                     pressed_in_playback.remove(val[1])
                     keyboard_controller.release(toKey(val[1]))
-            elif val[0] == self.InputType.SCROLL:
+            elif input_type == self.InputType.SCROLL:
                 mouse_controller.scroll(0, val[1])
-            elif val[0] == self.InputType.BUTTON:
+            elif input_type == self.InputType.BUTTON:
                 if val[1] not in pressed_in_playback:
                     pressed_in_playback.add(val[1])
                     mouse_controller.press(toButton(val[1]))
@@ -555,6 +559,7 @@ class Recorder:
                 i = 0
                 loop_count += 1
                 prev_mouse_pos = (-1, -1)
+                print("=========END==========")
                 
         key_listener.stop()
         if self.__state[self.State.PLAYING]:
@@ -677,6 +682,9 @@ def main():
     input.record()
     input.printRecord()
     input.play(mouse_movement=Recorder.MouseMovement.ABSOLUTE)
+    # mouse = _mouse.Controller()
+    # # print("({0}, {1})".format(mouse.position[0], mouse.position[1]))
+    # mouse.position = (25, 65)
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
