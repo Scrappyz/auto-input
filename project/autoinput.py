@@ -542,7 +542,7 @@ class Recorder:
                     pressed_in_playback.remove(val[1])
                     keyboard_controller.release(toKey(val[1]))
             elif val[0] == self.InputType.SCROLL:
-                mouse_controller.scroll(val[1])
+                mouse_controller.scroll(0, val[1])
             elif val[0] == self.InputType.BUTTON:
                 if val[1] not in pressed_in_playback:
                     pressed_in_playback.add(val[1])
