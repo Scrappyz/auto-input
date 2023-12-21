@@ -526,8 +526,12 @@ class Recorder:
                 _time.sleep(self.__speedUp(val[1], speed))
             elif val[0] == self.InputType.MOVE:
                 if mouse_movement == self.MouseMovement.RELATIVE:
-                    current_pos = mouse_controller.position
-                    mouse_controller.move(val[1][0] - current_pos[0], val[1][1] - current_pos[1])
+                    if prev_mouse_pos == (-1, -1):
+                        prev_mouse_pos = val[1]
+                        continue
+                    mouse_pos = val[1]
+                    mouse_controller.move(mouse_pos[0] - prev_mouse_pos[0], mouse_pos[1] - prev_mouse_pos[1])
+                    prev_mouse_pos = mouse_pos
                 else:
                     mouse_controller.position = (val[1][0], val[1][1])
             elif val[0] == self.InputType.KEY:
@@ -550,6 +554,7 @@ class Recorder:
             if i >= length and (loop < 0 or loop_count < loop):
                 i = 0
                 loop_count += 1
+                prev_mouse_pos = (-1, -1)
                 
         key_listener.stop()
         if self.__state[self.State.PLAYING]:
@@ -671,7 +676,7 @@ def main():
     input = Recorder()
     input.record()
     input.printRecord()
-    input.play()
+    input.play(mouse_movement=Recorder.MouseMovement.ABSOLUTE)
     
     # if not config_path.exists():
     #     writeConfig(config, config_path)
