@@ -354,20 +354,19 @@ class Recorder:
             _pressed.remove(key)
             
     def __onPressForRecord(self, key):
-        if self.InputOption.KEYBOARD not in self.__input_option:
+        stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
+        key_code = toKeyCode(key)
+        if self.InputOption.KEYBOARD not in self.__input_option and key_code not in stop_hotkey:
             return
         
         global _pressed
-        key_code = toKeyCode(key)
-        
         if key_code in _pressed:
             return
         
-        stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
         _pressed.add(key_code)
         
         key_string = toString(key_code)
-        _log.info("Pressed: {0}".format(key_string))
+        _log.info("Pressed '{0}'".format(key_string))
         self.__setTime()
         self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
         self.__record.append(tuple([self.InputType.KEY, key_string]))
@@ -380,12 +379,12 @@ class Recorder:
             return False
     
     def __onReleaseForRecord(self, key):
-        if self.InputOption.KEYBOARD not in self.__input_option:
+        stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
+        key_code = toKeyCode(key)
+        if self.InputOption.KEYBOARD not in self.__input_option and key_code not in stop_hotkey:
             return
         
         global _pressed
-        key_code = toKeyCode(key)
-        
         if key_code not in _pressed:
             return
     
@@ -393,7 +392,7 @@ class Recorder:
         
         key_string = toString(key_code)
         self.__setTime()
-        _log.info("Released: {0}".format(key_string))
+        _log.info("Released '{0}'".format(key_string))
         self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
         self.__record.append(tuple([self.InputType.KEY, key_string]))
         
@@ -501,7 +500,7 @@ class Recorder:
         _pressed.clear()
         self.__states[self.State.RECORDING] = False
                 
-    def play(self, loop=-1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
+    def play(self, loop=1, mouse_movement=MouseMovement.RELATIVE, speed=1.0):
         keyboard_controller = _keyboard.Controller()
         mouse_controller = _mouse.Controller()
         
@@ -511,8 +510,10 @@ class Recorder:
             listener.join()
         
         if not self.__states[self.State.PLAYING]:
+            print("[END] Playback cancelled")
             return
         
+        print("[START] Press '{0}' to stop playback".format(self.__hotkeys[self.Hotkey.STOP].getHotkeyName()))
         key_listener = _keyboard.Listener(on_press=self.__onPressForPlay, on_release=self.__onReleaseForPlay)
         key_listener.start()
         
@@ -535,25 +536,29 @@ class Recorder:
                     mouse_controller.move(mouse_pos[0] - prev_mouse_pos[0], mouse_pos[1] - prev_mouse_pos[1])
                     prev_mouse_pos = mouse_pos
                 else:
-                    print("before: {0}".format(mouse_controller.position))
                     mouse_controller.position = (val[1][0], val[1][1])
-                    print("after: {0}".format(mouse_controller.position))
+                _log.info("Moved mouse to position ({0}, {1})".format(mouse_controller.position[0], mouse_controller.position[1]))
             elif input_type == self.InputType.KEY:
                 if val[1] not in pressed_in_playback:
                     pressed_in_playback.add(val[1])
                     keyboard_controller.press(toKey(val[1]))
+                    _log.info("Pressed '{0}'".format(val[1]))
                 else:
                     pressed_in_playback.remove(val[1])
                     keyboard_controller.release(toKey(val[1]))
+                    _log.info("Released '{0}'".format(val[1]))
             elif input_type == self.InputType.SCROLL:
                 mouse_controller.scroll(0, val[1])
+                _log.info("Scrolled {0}".format("up" if val[1] > 0 else "down"))
             elif input_type == self.InputType.BUTTON:
                 if val[1] not in pressed_in_playback:
                     pressed_in_playback.add(val[1])
                     mouse_controller.press(toButton(val[1]))
+                    _log.info("Pressed '{0}'".format(val[1]))
                 else:
                     pressed_in_playback.remove(val[1])
                     mouse_controller.release(toButton(val[1]))
+                    _log.info("Released '{0}'".format(val[1]))
             i += 1
             if i >= length and (loop < 0 or loop_count < loop):
                 i = 0
@@ -602,187 +607,166 @@ class Recorder:
     #     for i in self.__record:
     #         print(type(i))
         
-# def strToJson(s: str) -> str:
-#     if s.endswith("._json"):
-#         return s
-#     return s + "._json"
+def __strToJson(s: str) -> str:
+    if s.endswith(".json"):
+        return s
+    return s + ".json"
 
-# def strToMouseMovement(s: str):
-#     s = s.lower()
-#     if s.startswith("abs"):
-#         return Recorder.MouseMovement.ABSOLUTE
-#     elif s.startswith("rel"):
-#         return Recorder.MouseMovement.RELATIVE
+def __strToMouseMovement(s: str):
+    s = s.lower()
+    if s.startswith("abs"):
+        return Recorder.MouseMovement.ABSOLUTE
+    elif s.startswith("rel"):
+        return Recorder.MouseMovement.RELATIVE
 
-# def addRecord(args, record_dir):
-#     record_dir = _path(record_dir)
-#     if not record_dir.exists():
-#         record_dir.mkdir(parents=True)
+def __addRecord(args, record_dir):
+    record_dir = _path(record_dir)
+    if not record_dir.exists():
+        record_dir.mkdir(parents=True)
         
-#     input = Recorder()
-#     input_option = set()
-#     record_name = strToJson(args.record)
-#     if args._mouse:
-#         input_option.add(Recorder.InputOption.MOUSE)
-#     if args._keyboard:
-#         input_option.add(Recorder.InputOption.KEYBOARD)
+    input = Recorder()
+    input_option = set()
+    record_name = __strToJson(args.record)
+    if args._mouse:
+        input_option.add(Recorder.InputOption.MOUSE)
+    if args._keyboard:
+        input_option.add(Recorder.InputOption.KEYBOARD)
     
-#     if not input_option:
-#         print("[ERROR] Input option cannot be empty, try adding either '-m' or '-k' flag")
-#         return
+    if not input_option:
+        print("[ERROR] Input option cannot be empty, try adding either '-m' or '-k' flag")
+        return
     
-#     input.record(option=input_option)
-#     if not input.isRecordEmpty():
-#         input.saveRecordToJson(record_dir.joinpath(record_name))
+    input.record(option=input_option)
+    if not input.isRecordEmpty():
+        input.saveRecordToJson(record_dir.joinpath(record_name))
     
-# def removeRecord(args, record_dir):
-#     record_dir = _path(record_dir)
-#     files = args.record
-#     for i in files:  
-#         file = record_dir.joinpath(strToJson(i))
-#         if file.exists():
-#             file.unlink()
-#             print("[SUCCESS] Deleted record {0}".format(file.stem))
+def __removeRecord(args, record_dir):
+    record_dir = _path(record_dir)
+    files = args.record
+    for i in files:  
+        file = record_dir.joinpath(__strToJson(i))
+        if file.exists():
+            file.unlink()
+            print("[SUCCESS] Deleted record {0}".format(file.stem))
     
-# def listRecords(path):
-#     path = _path(path)
-#     if not path.exists():
-#         print("[ERROR] Record directory does not exist")
-#         return
+def __listRecords(path):
+    path = _path(path)
+    if not path.exists():
+        print("[ERROR] Record directory does not exist")
+        return
         
-#     print("Records:")
-#     files = path.glob('*')
-#     for file in files:
-#         print("  " + file.stem)
+    print("Records:")
+    files = path.glob('*')
+    for file in files:
+        print("  " + file.stem)
         
-# def playRecord(args, record_dir):
-#     record_dir = _path(record_dir)
-#     input = Recorder()
-#     record_name = str(record_dir.joinpath(strToJson(args.record)))
-#     input.getRecordFromJson(record_name)
-#     input.play(args.loop, strToMouseMovement(args.movement), args.speed)
+def __playRecord(args, record_dir):
+    record_dir = _path(record_dir)
+    input = Recorder()
+    record_name = str(record_dir.joinpath(__strToJson(args.record)))
+    input.getRecordFromJson(record_name)
+    input.play(args.loop, __strToMouseMovement(args.movement), args.speed)
     
-# def readConfig(config_path) -> dict:
-#     with open(config_path, 'r') as file:
-#         data = _json.load(file)
-#     return data
+def __readConfig(config_path) -> dict:
+    with open(config_path, 'r') as file:
+        data = _json.load(file)
+    return data
 
-# def writeConfig(config, config_path):
-#     data = _json.dumps(config, indent=4)
-#     with open(config_path, 'w') as file:
-#         file.write(data)
-t = 0
-def onMove(x, y):
-    print("({0}, {1})".format(x, y))
-    global t
-    t += 1
-    if t == 10:
-        return False
-
-def testMouse():
-    with _mouse.Listener(on_move=onMove) as l:
-        l.join()
+def __writeConfig(config, config_path):
+    data = _json.dumps(config, indent=4)
+    with open(config_path, 'w') as file:
+        file.write(data)
 
 def main():
     current_dir = _path(__file__).parent.resolve()
-    config_path = current_dir.joinpath("config._json")
+    config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
-
-    input = Recorder()
-    input.record()
-    input.printRecord()
-    input.play(mouse_movement=Recorder.MouseMovement.RELATIVE)
-    # testMouse()
-    # mouse.position = (25, 65)
     
-    # if not config_path.exists():
-    #     writeConfig(config, config_path)
-    # else:
-    #     config = readConfig(config_path)
+    if not config_path.exists():
+        __writeConfig(config, config_path)
+    else:
+        config = __readConfig(config_path)
         
-    # record_dir = config["recordDirectory"]
+    record_dir = config["recordDirectory"]
     
-    # # main
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.1.1-alpha"))
-    # subparser = parser.add_subparsers(dest="command1")
+    # main
+    parser = __argparse.ArgumentParser()
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.2.0-alpha"))
+    subparser = parser.add_subparsers(dest="command1")
     
-    # # record
-    # cmd_record = subparser.add_parser("record", help="record input")
-    # record_subparser = cmd_record.add_subparsers(dest="command2")
+    # record
+    cmd_record = subparser.add_parser("record", help="record input")
+    record_subparser = cmd_record.add_subparsers(dest="command2")
     
-    # # record add
-    # cmd_record_add = record_subparser.add_parser("add", help="add a new record")
-    # cmd_record_add.add_argument("record", type=str)
-    # cmd_record_add.add_argument("-m", "--_mouse", action="store_true", dest="_mouse", help="enable _mouse when recording")
-    # cmd_record_add.add_argument("-k", "--_keyboard", action="store_true", dest="_keyboard", help="enable _keyboard when recording")
+    # record add
+    cmd_record_add = record_subparser.add_parser("add", help="add a new record")
+    cmd_record_add.add_argument("record", type=str)
+    cmd_record_add.add_argument("-m", "--_mouse", action="store_true", dest="_mouse", help="enable mouse when recording")
+    cmd_record_add.add_argument("-k", "--_keyboard", action="store_true", dest="_keyboard", help="enable keyboard when recording")
     
-    # # record remove
-    # cmd_record_remove = record_subparser.add_parser("remove", help="delete record(s)")
-    # cmd_record_remove.add_argument("record", nargs='+', type=str, help="a list of records")
+    # record remove
+    cmd_record_remove = record_subparser.add_parser("remove", help="delete record(s)")
+    cmd_record_remove.add_argument("record", nargs='+', type=str, help="a list of records")
     
-    # # record list
-    # cmd_record_list = record_subparser.add_parser("list", help="list all records")
+    # record list
+    cmd_record_list = record_subparser.add_parser("list", help="list all records")
     
-    # # play
-    # cmd_play = subparser.add_parser("play", help="play a record")
-    # cmd_play.add_argument("record", nargs='?', help="the record to play")
-    # cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
-    # cmd_play.add_argument("--loop", nargs='?', type=int, default=1, const=-1, dest="loop", help="loop playback")
-    # cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
-    # cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of _mouse movement to use (absolute or relative)")
+    # play
+    cmd_play = subparser.add_parser("play", help="play a record")
+    cmd_play.add_argument("record", nargs='?', help="the record to play")
+    cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
+    cmd_play.add_argument("--loop", nargs='?', type=int, default=1, const=-1, dest="loop", help="loop playback")
+    cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
+    cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of _mouse movement to use (absolute or relative)")
     
-    # # config
-    # cmd_config = subparser.add_parser("config", help="config settings")
-    # config_subparser = cmd_config.add_subparsers(dest="command2")
+    # config
+    cmd_config = subparser.add_parser("config", help="config settings")
+    config_subparser = cmd_config.add_subparsers(dest="command2")
     
-    # # config set
-    # cmd_config_set = config_subparser.add_parser("set", help="set config settings")
-    # cmd_config_set.add_argument("config", nargs=2, type=str, help="the config to change to a new value")
+    # config set
+    cmd_config_set = config_subparser.add_parser("set", help="set config settings")
+    cmd_config_set.add_argument("config", nargs=2, type=str, help="the config to change to a new value")
     
-    # # config get
-    # cmd_config_get = config_subparser.add_parser("get", help="get config values")
-    # cmd_config_get.add_argument("config", nargs='*', type=str, help="the config values to get")
+    # config get
+    cmd_config_get = config_subparser.add_parser("get", help="get config values")
+    cmd_config_get.add_argument("config", nargs='*', type=str, help="the config values to get")
     
-    # args = parser.parse_args("record add test -mk".split(" "))
-    # if args.command1 == "record":
-    #     if args.command2 == "add":
-    #         addRecord(args, record_dir)
-    #     elif args.command2 == "remove":
-    #         removeRecord(args, record_dir)
-    #     elif args.command2 == "list":
-    #         listRecords(record_dir)
-    # elif args.command1 == "play":
-    #     if args.all:
-    #         listRecords(record_dir)
-    #         exit()
-    #     playRecord(args, record_dir)
-    # elif args.command1 == "config":
-    #     if args.command2 == "set":
-    #         key = args.config[0]
-    #         val = args.config[1]
-    #         if key in config:
-    #             config[key] = val
-    #             writeConfig(config, config_path)
-    #             print("[SUCCESS] Config setting \"{0}\" has been set to \"{1}\"".format(key, val))
-    #         else:
-    #             print("[ERROR] Config setting \"{0}\" does not exist".format(key))
-    #     elif args.command2 == "get":
-    #         if not args.config:
-    #             for k, v in config.items():
-    #                 print("\"{0}\": \"{1}\"".format(k, v))
-    #         else:
-    #             for i in args.config:
-    #                 if i in config:
-    #                     print("\"{0}\": \"{1}\"".format(i, config[i]))
-    #                 else: 
-    #                     print("[ERROR] Config setting \"{0}\" does not exist".format(i))
+    args = parser.parse_args()
+    if args.command1 == "record":
+        if args.command2 == "add":
+            __addRecord(args, record_dir)
+        elif args.command2 == "remove":
+            __removeRecord(args, record_dir)
+        elif args.command2 == "list":
+            __listRecords(record_dir)
+    elif args.command1 == "play":
+        if args.all:
+            __listRecords(record_dir)
+            exit()
+        __playRecord(args, record_dir)
+    elif args.command1 == "config":
+        if args.command2 == "set":
+            key = args.config[0]
+            val = args.config[1]
+            if key in config:
+                config[key] = val
+                __writeConfig(config, config_path)
+                print("[SUCCESS] Config setting \"{0}\" has been set to \"{1}\"".format(key, val))
+            else:
+                print("[ERROR] Config setting \"{0}\" does not exist".format(key))
+        elif args.command2 == "get":
+            if not args.config:
+                for k, v in config.items():
+                    print("\"{0}\": \"{1}\"".format(k, v))
+            else:
+                for i in args.config:
+                    if i in config:
+                        print("\"{0}\": \"{1}\"".format(i, config[i]))
+                    else: 
+                        print("[ERROR] Config setting \"{0}\" does not exist".format(i))
     
 if __name__ == "__main__":
     main()
     
-# _keyboard = int
-# _time = float
-# scroll = str(u | d)
-# _mouse movement = tuple(3)
-# _mouse button = str(l | m | r)
+# Bugs
+# reading stop hotkey in recording when only "-m" flag is specified
