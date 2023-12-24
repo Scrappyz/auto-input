@@ -294,10 +294,7 @@ class Recorder:
         self.__delay = float(int((current) * 1000) / 1000)
         self.__start = _time.time()
         
-    def __removeHotkeyFromRecord(self):
-        if self.InputOption.KEYBOARD not in self.__input_option: # do not pop if _keyboard not included
-            return
-        
+    def __removeHotkeyFromRecord(self):        
         del_count = 0
         prev = 0
         indices = list(self.__hotkey_pos_in_record.values())
