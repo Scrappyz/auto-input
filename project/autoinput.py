@@ -599,10 +599,6 @@ class Recorder:
             elif val[0] == self.InputType.DELAY:
                 print("[{0}] Delay: {1}s".format(i, val[1]))    
         print("Length: {0}".format(len(self.__record)))
-            
-    # def printTypes(self):
-    #     for i in self.__record:
-    #         print(type(i))
         
 def __strToJson(s: str) -> str:
     if s.endswith(".json"):
@@ -766,4 +762,3 @@ if __name__ == "__main__":
     main()
     
 # Bugs
-# reading stop hotkey in recording when only "-m" flag is specified
