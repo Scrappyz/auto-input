@@ -44,9 +44,14 @@ class Hotkey:
         return self.__hotkey_combo
     
     def setHotkey(self, hotkey):
-        if type(hotkey) == str:
+        t = type(hotkey)
+        if t == Hotkey:
+            self.__hotkey = hotkey.getHotkey()
+            self.__hotkey_combo = hotkey.getHotkeyCombo()   
+            return 
+        elif t == str:
             self.__hotkey = Hotkey.parse(hotkey)
-        elif type(hotkey) == list:
+        elif t == list:
             for i in hotkey:
                 if type(i) == str:
                     self.__hotkey.append(i)
@@ -246,9 +251,9 @@ class Recorder:
         CANCEL = 3
         
     class State(_IntEnum):
-        READY = 0
-        RECORDING = 1
-        PLAYING = 2
+        RECORDING = 0
+        PLAYING = 1
+        PAUSED = 2
         
     class InputType(_IntEnum):
         KEY = 0
@@ -257,11 +262,13 @@ class Recorder:
         SCROLL = 3
         DELAY = 4
     
-    def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="", stop_hotkey="ctrl+shift", cancel_hotkey="ctrl+z"):
+    def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="ctrl+alt", stop_hotkey="ctrl+shift", cancel_hotkey="ctrl+z"):
         self.__record = []
-        self.__states = [False, False, False]
-        self.__hotkeys = [Hotkey(start_hotkey), Hotkey(pause_hotkey), Hotkey(stop_hotkey), Hotkey(cancel_hotkey)]
+        self.__states = (False, False, False)
+        self.__hotkeys = (Hotkey(start_hotkey), Hotkey(pause_hotkey), Hotkey(stop_hotkey), Hotkey(cancel_hotkey))
         self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
+        
+        # if self.__hotkeys[0].getHotkeyCombo() == self.__hotkeys[3].get
         
         # Helper variables
         self.__ready_state = -1 

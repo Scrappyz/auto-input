@@ -11,6 +11,11 @@ class TestAutoInput(unittest.TestCase):
         self.assertEqual(hotkey.getHotkeyName(), "ctrl + shift")
         self.assertEqual(hotkey.getHotkey(), ["ctrl", "shift"])
         self.assertEqual(hotkey.getHotkeyCombo(), {162, 160})
+        
+        h = Hotkey(hotkey)
+        self.assertEqual(h.getHotkeyName(), "ctrl + shift")
+        self.assertEqual(h.getHotkey(), ["ctrl", "shift"])
+        self.assertEqual(h.getHotkeyCombo(), {162, 160})
     
     def test_parse(self):
         self.assertEqual(Hotkey.parse("ctrl+shift_r"), ["ctrl", "shift_r"])
