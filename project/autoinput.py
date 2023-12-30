@@ -252,14 +252,15 @@ class Recorder:
         SCROLL = 3
         DELAY = 4
     
-    def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="ctrl+alt", stop_hotkey="ctrl+shift", cancel_hotkey="ctrl+z"):
+    def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="ctrl+alt", stop_hotkey="ctrl+c"):
         start_hotkey = Hotkey(start_hotkey)
         pause_hotkey = Hotkey(pause_hotkey)
         stop_hotkey = Hotkey(stop_hotkey)
-        cancel_hotkey = Hotkey(cancel_hotkey)
         
-        if start_hotkey.getHotkeyCombo() == cancel_hotkey.getHotkeyCombo():
+        if start_hotkey.getHotkeyCombo() == stop_hotkey.getHotkeyCombo():
             raise ValueError("Start hotkey and cancel hotkey cannot be the same")
+        elif pause_hotkey.getHotkeyCombo() == start_hotkey.getHotkeyCombo():
+            raise ValueError("Pause hotkey and start hotkey cannot be the same")
         elif pause_hotkey.getHotkeyCombo() == stop_hotkey.getHotkeyCombo():
             raise ValueError("Pause hotkey and stop hotkey cannot be the same")
         
@@ -358,8 +359,9 @@ class Recorder:
             
     def __onPressForRecord(self, key):
         stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
+        pause_hotkey = self.__hotkeys[self.Hotkey.PAUSE].getHotkeyCombo()
         key_string = toString(key)
-        if self.InputOption.KEYBOARD not in self.__input_option and key_string not in stop_hotkey:
+        if self.InputOption.KEYBOARD not in self.__input_option and key_string not in stop_hotkey and key_string not in pause_hotkey:
             return
         
         global _pressed
@@ -372,13 +374,16 @@ class Recorder:
         self.__setTime()
         self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
         self.__record.append(tuple([self.InputType.KEY, key_string]))
-        if key_string in stop_hotkey:
+        if key_string in stop_hotkey or key_string in pause_hotkey:
             self.__hotkey_pos_in_record[key_string] = len(self.__record)-1
             
         if _pressed == stop_hotkey:
             self.__removeHotkeyFromRecord()
             print("[END] Recording stopped")
             return False
+        elif _pressed == pause_hotkey:
+            self.__removeHotkeyFromRecord()
+            print("[PAUSED] Press '{0}' to continue or press '{1}' to end record".format(self.__hotkeys[self.Hotkey.START].getHotkeyName(), self.__hotkeys[self.Hotkey.STOP].getHotkeyName()))
     
     def __onReleaseForRecord(self, key):
         stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
