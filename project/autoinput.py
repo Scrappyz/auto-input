@@ -457,6 +457,9 @@ class Recorder:
         if self.InputOption.MOUSE not in self.__input_option:
             return 
         
+        if self.__states[self.State.PAUSED]:
+            return
+        
         if self.__mouse_move_counter < 10:
             self.__mouse_move_counter += 1
         else:
@@ -470,6 +473,9 @@ class Recorder:
     def __onClickForRecord(self, x, y, button, pressed):
         if self.InputOption.MOUSE not in self.__input_option:
             return 
+        
+        if self.__states[self.State.PAUSED]:
+            return
         
         global _pressed
         button_string = toString(button)
@@ -494,6 +500,9 @@ class Recorder:
     def __onScrollForRecord(self, x, y, dx, dy):
         if self.InputOption.MOUSE not in self.__input_option:
             return 
+        
+        if self.__states[self.State.PAUSED]:
+            return
         
         self.__setTime()
         self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
@@ -711,7 +720,7 @@ def main():
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
     
     input = Recorder()
-    input.record(option={Recorder.InputOption.KEYBOARD})
+    input.record()
     input.printRecord()
     
     # if not config_path.exists():
