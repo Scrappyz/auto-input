@@ -57,28 +57,6 @@ class Hotkey:
                     self.__hotkey.append(i)
         
         self.__hotkey_combo = toCombo(self.__hotkey)
-        
-    def setHotkeyFromInput(self):
-        self.__hotkey.clear()
-        self.__hotkey_combo.clear()
-        with _keyboard.Listener(on_press=self.__onPress, on_release=self.__onRelease) as listener:    
-            listener.join()
-        
-    def __onPress(self, key):
-        key_code = toKeyCode(key)
-        if key_code not in _pressed:
-            if _keyboard.Key.ctrl_l.value.vk in _pressed:
-                print("ctrl pressed")
-                _keyboard.Controller().release(_keyboard.Key.ctrl_l)
-            _pressed.add(key_code)
-            self.__hotkey.append(key)
-            self.__hotkey_combo.add(key_code)
-            
-    def __onRelease(self, key):
-        if key == _keyboard.Key.ctrl_l:
-            return
-        _pressed.clear()
-        return False
     
     @staticmethod
     def parse(hotkey: str) -> list:
@@ -286,8 +264,8 @@ class Recorder:
             raise ValueError("Pause hotkey and stop hotkey cannot be the same")
         
         self.__record = []
-        self.__states = (False, False, False)
-        self.__hotkeys = (start_hotkey, pause_hotkey, stop_hotkey, cancel_hotkey)
+        self.__states = [False, False, False]
+        self.__hotkeys = [start_hotkey, pause_hotkey, stop_hotkey, cancel_hotkey]
         self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
         
         # Helper variables
@@ -361,9 +339,9 @@ class Recorder:
         global _pressed
         start_hotkey = self.__hotkeys[self.Hotkey.START].getHotkeyCombo()
         cancel_hotkey = self.__hotkeys[self.Hotkey.CANCEL].getHotkeyCombo()
-        key_code = toKeyCode(key)
-        if key_code in start_hotkey or key_code in cancel_hotkey:
-            _pressed.add(key_code)
+        key_string = toString(key)
+        if key_string in start_hotkey or key_string in cancel_hotkey:
+            _pressed.add(key_string)
             if _pressed == start_hotkey:
                 self.__states[self.__ready_state] = True
                 self.__ready_state = -1
@@ -374,27 +352,27 @@ class Recorder:
             
     def __onReleaseForReady(self, key):
         global _pressed
-        if key in _pressed:
-            _pressed.remove(key)
+        key_string = toString(key)
+        if key_string in _pressed:
+            _pressed.remove(key_string)
             
     def __onPressForRecord(self, key):
         stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
-        key_code = toKeyCode(key)
-        if self.InputOption.KEYBOARD not in self.__input_option and key_code not in stop_hotkey:
+        key_string = toString(key)
+        if self.InputOption.KEYBOARD not in self.__input_option and key_string not in stop_hotkey:
             return
         
         global _pressed
-        if key_code in _pressed:
+        if key_string in _pressed:
             return
         
-        _pressed.add(key_code)
+        _pressed.add(key_string)
         
-        key_string = toString(key_code)
         _log.info("Pressed '{0}'".format(key_string))
         self.__setTime()
         self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
         self.__record.append(tuple([self.InputType.KEY, key_string]))
-        if key_code in stop_hotkey:
+        if key_string in stop_hotkey:
             self.__hotkey_pos_in_record[key_string] = len(self.__record)-1
             
         if _pressed == stop_hotkey:
@@ -404,17 +382,16 @@ class Recorder:
     
     def __onReleaseForRecord(self, key):
         stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
-        key_code = toKeyCode(key)
-        if self.InputOption.KEYBOARD not in self.__input_option and key_code not in stop_hotkey:
+        key_string = toString(key)
+        if self.InputOption.KEYBOARD not in self.__input_option and key_string not in stop_hotkey:
             return
         
         global _pressed
-        if key_code not in _pressed:
+        if key_string not in _pressed:
             return
     
-        _pressed.remove(key_code)
+        _pressed.remove(key_string)
         
-        key_string = toString(key_code)
         self.__setTime()
         _log.info("Released '{0}'".format(key_string))
         self.__record.append(tuple([self.InputType.DELAY, self.__delay]))
@@ -422,13 +399,13 @@ class Recorder:
         
     def __onPressForPlay(self, key):
         global _pressed
-        key_code = toKeyCode(key)
+        key_string = toString(key)
         
-        if key_code in _pressed:
+        if key_string in _pressed:
             return
         
         stop_hotkey = self.__hotkeys[self.Hotkey.STOP].getHotkeyCombo()
-        _pressed.add(key_code)
+        _pressed.add(key_string)
         
         if _pressed == stop_hotkey:
             self.__states[self.State.PLAYING] = False
@@ -437,12 +414,12 @@ class Recorder:
                 
     def __onReleaseForPlay(self, key):
         global _pressed
-        key_code = toKeyCode(key)
+        key_string = toString(key)
         
-        if key_code not in _pressed:
+        if key_string not in _pressed:
             return
     
-        _pressed.remove(key_code)
+        _pressed.remove(key_string)
 
     # Mouse listeners
     def __onMoveForRecord(self, x, y):
@@ -702,8 +679,9 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
     
-    # input = Recorder(pause_hotkey="ctrl+shift", stop_hotkey="ctrl+z")
-    print(toCombo("ctrl+shift"))
+    input = Recorder()
+    input.record()
+    input.play()
     
     # if not config_path.exists():
     #     __writeConfig(config, config_path)
