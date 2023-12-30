@@ -10,12 +10,12 @@ class TestAutoInput(unittest.TestCase):
         hotkey = Hotkey("ctrl+shift")
         self.assertEqual(hotkey.getHotkeyName(), "ctrl + shift")
         self.assertEqual(hotkey.getHotkey(), ["ctrl", "shift"])
-        self.assertEqual(hotkey.getHotkeyCombo(), {162, 160})
+        self.assertEqual(hotkey.getHotkeyCombo(), {"ctrl", "shift"})
         
         h = Hotkey(hotkey)
         self.assertEqual(h.getHotkeyName(), "ctrl + shift")
         self.assertEqual(h.getHotkey(), ["ctrl", "shift"])
-        self.assertEqual(h.getHotkeyCombo(), {162, 160})
+        self.assertEqual(h.getHotkeyCombo(), {"ctrl", "shift"})
     
     def test_parse(self):
         self.assertEqual(Hotkey.parse("ctrl+shift_r"), ["ctrl", "shift_r"])
@@ -41,10 +41,10 @@ class TestAutoInput(unittest.TestCase):
         self.assertEqual(toKeyCode([keyboard.KeyCode.from_vk(162), keyboard.KeyCode.from_char('a')]), [162, 65])
         
     def test_toCombo(self):
-        self.assertEqual(toCombo("ctrl+shift"), {162, 160})
-        self.assertEqual(toCombo("ctrl + shift"), {162, 160})
-        self.assertEqual(toCombo("ctrl+a"), {162, 65})
-        self.assertEqual(toCombo([162, 65]), {162, 65})
+        self.assertEqual(toCombo("ctrl+shift"), {"ctrl", "shift"})
+        self.assertEqual(toCombo("ctrl + shift"), {"ctrl", "shift"})
+        self.assertEqual(toCombo("ctrl+a"), {"ctrl", "a"})
+        self.assertEqual(toCombo([162, 65]), {"ctrl", "a"})
         
     def test_toKey(self):
         self.assertEqual(toKey("ctrl"), keyboard.KeyCode.from_vk(162))

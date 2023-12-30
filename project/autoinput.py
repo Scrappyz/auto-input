@@ -185,10 +185,22 @@ def toKeyCode(key, force_list_return_type=False):
         raise TypeError
     
 def toCombo(key) -> set:
-    key = toKeyCode(key)
+    t = type(key)
+    if t == str:
+        key = Hotkey.parse(key)
+    
+    t = type(key)
     combo = set()
-    for i in key:
-        combo.add(i)
+    if t == list:
+        for i in key:
+            val = i
+            t = type(val)
+            if t == int or t == _keyboard.Key or t == _keyboard.KeyCode or t == _mouse.Button:
+                val = toString(val)
+            
+            t = type(val)
+            if t == str:
+                combo.add(val)
     return combo
     
 def toKey(key, force_list_return_type=False):
@@ -690,8 +702,8 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
     
-    input = Recorder(pause_hotkey="ctrl+shift", stop_hotkey="ctrl+z")
-    
+    # input = Recorder(pause_hotkey="ctrl+shift", stop_hotkey="ctrl+z")
+    print(toCombo("ctrl+shift"))
     
     # if not config_path.exists():
     #     __writeConfig(config, config_path)
