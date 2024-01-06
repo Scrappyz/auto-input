@@ -2,6 +2,7 @@ import argparse as __argparse
 import time as _time
 import logging as _logging
 import json as _json
+from threading import Event as _Event
 from enum import IntEnum as _IntEnum
 from pathlib import Path as _path
 from pynput import mouse as _mouse
@@ -269,6 +270,7 @@ class Recorder:
         self.__input_option = {self.InputOption.MOUSE, self.InputOption.KEYBOARD}
         
         # Helper variables
+        self.__event = _Event() # used to pause
         self.__ready_state = -1 
         self.__mouse_move_counter = 0 # count the number of pixels the mouse has moved
         self.__start = 0 # start time
@@ -449,11 +451,13 @@ class Recorder:
                 self.__states[self.State.PAUSED] = False
                 print("[START] Playback has been continued")
                 _pressed.clear()
+                self.__event.set()
                 return
             elif _pressed == stop_hotkey:
                 self.__states[self.State.PLAYING] = False
                 self.__states[self.State.PAUSED] = False
                 print("[END] Playback stopped")
+                self.__event.set()
                 return False
             else:
                 return
@@ -587,9 +591,14 @@ class Recorder:
         i = 0
         loop_count = 0
         while self.__states[self.State.PLAYING] and (loop < 0 or loop_count < loop):
+            if self.__states[self.State.PAUSED]:
+                self.__event.wait()
+                self.__event.clear()
+                _time.sleep(0.2)
             val = self.__record[i]
             input_type = val[0]
             if input_type == self.InputType.DELAY:
+                print("waiting")
                 _time.sleep(self.__speedUp(val[1], speed))
             elif input_type == self.InputType.MOVE:
                 if mouse_movement == self.MouseMovement.RELATIVE:
@@ -628,8 +637,6 @@ class Recorder:
                 i = 0
                 loop_count += 1
                 prev_mouse_pos = (-1, -1)
-            while self.__states[self.State.PAUSED]:
-                continue
                 
         key_listener.stop()
         if self.__states[self.State.PLAYING]:
