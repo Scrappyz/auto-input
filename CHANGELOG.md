@@ -2,17 +2,18 @@
 
 All notable changes on this project will be documented on this file.
 
-## [0.3.0-alpha] - Unreleased
+## [0.4.0-alpha] - Unreleased
 ### To be added
 - Auto-presser/clicker
+
+## [0.3.0-alpha] - Unreleased
+### To be added
+- Edit records
 
 ## [0.2.0-alpha] - Unreleased
 ### Added
 - Customizable hotkeys
 - Pause hotkey for record and playback
-
-### To be added
-- Edit records
 
 ## [0.1.2-alpha] - 2023-12-17
 ### Added
