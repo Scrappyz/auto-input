@@ -365,13 +365,11 @@ class Recorder:
         pause_hotkey = self.__hotkeys[self.Hotkey.PAUSE].getHotkeyCombo()
         key_string = toString(key)
         if self.InputOption.KEYBOARD not in self.__input_option and key_string not in stop_hotkey and key_string not in pause_hotkey and key_string not in start_hotkey:
-            # print("return1")
             return
         
         if self.__states[self.State.PAUSED] and key_string not in start_hotkey and key_string not in stop_hotkey:
-            # print("return2")
             return
-        # print("go")
+        
         global _pressed
         if key_string in _pressed:
             return
@@ -601,7 +599,6 @@ class Recorder:
             val = self.__record[i]
             input_type = val[0]
             if input_type == self.InputType.DELAY:
-                print("waiting")
                 _time.sleep(self.__speedUp(val[1], speed))
             elif input_type == self.InputType.MOVE:
                 if mouse_movement == self.MouseMovement.RELATIVE:
