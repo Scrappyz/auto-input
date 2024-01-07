@@ -11,6 +11,8 @@ All notable changes on this project will be documented on this file.
 - Edit records
 
 ## [0.2.1-alpha] - Unreleased
+### To be added
+- Configure hotkeys from input
 ### To be changed
 - Activate hotkeys on-release instead of on-press to be able to differentiate between `ctrl + shift` and `ctrl + shift + p`
 
