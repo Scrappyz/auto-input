@@ -469,7 +469,7 @@ class Recorder:
             return False
         elif _pressed == pause_hotkey:
             self.__states[self.State.PAUSED] = True
-            print("[PAUSED] Playback paused")
+            print("[PAUSED] Press '{0}' to continue or press '{1}' to stop".format(self.__hotkeys[self.Hotkey.START].getHotkeyName(), self.__hotkeys[self.Hotkey.STOP].getHotkeyName()))
                 
     def __onReleaseForPlay(self, key):
         global _pressed
