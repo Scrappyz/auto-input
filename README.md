@@ -7,11 +7,17 @@ A python program created to automate the mouse and keyboard.
 - [Usage](#usage)
 - [Future Features](#future-features)
 
+## Dependencies
+- [Python 3](https://www.python.org/downloads/)
+### Modules
+- [bidict](https://pypi.org/project/bidict/)
+- [pynput](https://pypi.org/project/pynput/)
+
 ## Installation
-1. Go to [releases](https://github.com/Scrappyz/auto-input/releases).
-2. Download the executable.
-3. Place the executable in an empty directory.
-4. Run the executable in the command-line.
+1. Once you have python installed, install the required modules using `pip`.
+2. Download the `autoinput.py` in [releases](https://github.com/Scrappyz/auto-input/releases).
+3. Place the python file in an empty directory.
+4. Run the `autoinput.py` using your chosen terminal.
 
 ## Usage
 ```
@@ -30,34 +36,42 @@ options:
 ```
 
 ### Recording
-You can record your input by using `record add <record-name> -mk` subcommand like so:
+Record your input using the `record make <record-name> -mk` command:
 ```
-autoinput record add "test" -mk
+autoinput record make "test" -mk
 ```
-In this command, we are making a record named `test` with the mouse and keyboard enabled by the `-m` and `-k` flag.
+This command creates a record named test with both mouse and keyboard inputs enabled.
 
 You will then encounter this prompt:
 ```
 [READY] Press 'ctrl + shift' to start recording or press 'ctrl + z' to cancel
 ```
-To start the recording, press the `left-ctrl` and `left-shift` button then press them again to end the recording.
+Press `ctrl + shift` to start recording. To pause, press `ctrl + alt`, and to stop, press `ctrl + z`.
+
+Hotkeys are configurable with the `config set` command.
 
 ### Playing records
-You can play your saved records by using the `play <record-name>` subcommand like so:
+Play saved records using the play <record-name> command:
 ```
 autoinput play "test"
 ```
-In this command, we are going to play the record called `test`.
+This command plays the record named `test`.
 
-To view your saved records use the command `record list` or `play -a`.
+To view saved records, use the command `record list` or `play -a`.
 
 After entering the `play` command, you will see this prompt:
 ```
 [READY] Press 'ctrl + shift' to start playback or press 'ctrl + z' to cancel
 ```
-To start the playback, press the `left-ctrl` and `left-shift` button then press them again to end the playback.
+Press `ctrl + shift` to start playback. To pause, press `ctrl + alt`, and to stop, press `ctrl + z`.
 
-## Future Features
-- Auto-presser
-- Customizable hotkeys
-- Better input tracking
+Hotkeys are configurable with the `config set` command.
+
+### Configuration
+Edit config options in the `config.json` file generated where `autoinput.py` resides.
+
+Alternatively, use the `config set <config-option> <value>` command:
+```
+autoinput config set "startHotkey" "ctrl + space"
+``` 
+This command sets the start hotkey to `ctrl + space`.
