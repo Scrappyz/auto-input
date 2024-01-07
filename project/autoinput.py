@@ -755,8 +755,8 @@ def main():
     cmd_record = subparser.add_parser("record", help="record input")
     record_subparser = cmd_record.add_subparsers(dest="command2")
     
-    # record add
-    cmd_record_add = record_subparser.add_parser("add", help="add a new record")
+    # record make
+    cmd_record_add = record_subparser.add_parser("make", help="add a new record")
     cmd_record_add.add_argument("record", type=str)
     cmd_record_add.add_argument("-m", "--_mouse", action="store_true", dest="_mouse", help="enable mouse when recording")
     cmd_record_add.add_argument("-k", "--_keyboard", action="store_true", dest="_keyboard", help="enable keyboard when recording")
@@ -790,7 +790,7 @@ def main():
     
     args = parser.parse_args()
     if args.command1 == "record":
-        if args.command2 == "add":
+        if args.command2 == "make":
             __makeRecord(args, config)
         elif args.command2 == "remove":
             __removeRecord(args, record_dir)
