@@ -672,12 +672,12 @@ def __strToMouseMovement(s: str):
     elif s.startswith("rel"):
         return Recorder.MouseMovement.RELATIVE
 
-def __addRecord(args, record_dir):
-    record_dir = _path(record_dir)
+def __addRecord(args, config):
+    record_dir = _path(config["recordDirectory"])
     if not record_dir.exists():
         record_dir.mkdir(parents=True)
         
-    input = Recorder()
+    input = Recorder(start_hotkey=config["startHotkey"], pause_hotkey=config["pauseHotkey"], stop_hotkey=config["stopHotkey"])
     input_option = set()
     record_name = __strToJson(args.record)
     if args._mouse:
@@ -713,9 +713,9 @@ def __listRecords(path):
     for file in files:
         print("  " + file.stem)
         
-def __playRecord(args, record_dir):
-    record_dir = _path(record_dir)
-    input = Recorder()
+def __playRecord(args, config):
+    record_dir = _path(config["recordDirectory"])
+    input = Recorder(start_hotkey=config["startHotkey"], pause_hotkey=config["pauseHotkey"], stop_hotkey=config["stopHotkey"])
     record_name = str(record_dir.joinpath(__strToJson(args.record)))
     input.getRecordFromJson(record_name)
     input.play(args.loop, __strToMouseMovement(args.movement), args.speed)
@@ -733,7 +733,11 @@ def __writeConfig(config, config_path):
 def main():
     current_dir = _path(__file__).parent.resolve()
     config_path = current_dir.joinpath("config.json")
-    config = {"recordDirectory" : str(current_dir.joinpath("records"))}
+    config = {"recordDirectory": str(current_dir.joinpath("records")),
+              "startHotkey": "ctrl + shift",
+              "pauseHotkey": "ctrl + alt",
+              "stopHotkey": "ctrl + z"
+            }
     
     if not config_path.exists():
         __writeConfig(config, config_path)
@@ -787,7 +791,7 @@ def main():
     args = parser.parse_args()
     if args.command1 == "record":
         if args.command2 == "add":
-            __addRecord(args, record_dir)
+            __addRecord(args, config)
         elif args.command2 == "remove":
             __removeRecord(args, record_dir)
         elif args.command2 == "list":
@@ -796,7 +800,7 @@ def main():
         if args.all:
             __listRecords(record_dir)
             exit()
-        __playRecord(args, record_dir)
+        __playRecord(args, config)
     elif args.command1 == "config":
         if args.command2 == "set":
             key = args.config[0]
