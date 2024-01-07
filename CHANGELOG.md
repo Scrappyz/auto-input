@@ -20,12 +20,12 @@ All notable changes on this project will be documented on this file.
 ### To be changed
 - Activate hotkeys on-release instead of on-press to be able to differentiate between `ctrl + shift` and `ctrl + shift + p`
 
-## [0.2.0-alpha] - Unreleased
+## [0.2.0-alpha] - 2024-01-07
 ### Added
 - Customizable hotkeys
 - Pause hotkey for record and playback
 ### Changed
-- Renamed `record add` to `record join`
+- Renamed `record add` to `record make`
 
 ## [0.1.2-alpha] - 2023-12-17
 ### Added
