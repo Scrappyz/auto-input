@@ -8,11 +8,15 @@ All notable changes on this project will be documented on this file.
 
 ## [0.3.0-alpha] - Unreleased
 ### To be added
-- Edit records
+- Join records with `record join <records...>`
+- Trim records with `record trim <record> <start> <end>`
+- Display record contents with `record <record>`
 
 ## [0.2.1-alpha] - Unreleased
 ### To be added
 - Configure hotkeys from input
+- Promptless option for `record` and `play`
+- Quiet option for `record` and `play`
 ### To be changed
 - Activate hotkeys on-release instead of on-press to be able to differentiate between `ctrl + shift` and `ctrl + shift + p`
 
@@ -20,6 +24,8 @@ All notable changes on this project will be documented on this file.
 ### Added
 - Customizable hotkeys
 - Pause hotkey for record and playback
+### Changed
+- Renamed `record add` to `record join`
 
 ## [0.1.2-alpha] - 2023-12-17
 ### Added

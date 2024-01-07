@@ -597,7 +597,7 @@ class Recorder:
             if self.__states[self.State.PAUSED]:
                 self.__event.wait()
                 self.__event.clear()
-                _time.sleep(0.2)
+                _time.sleep(0.2) # to avoid missing input
             val = self.__record[i]
             input_type = val[0]
             if input_type == self.InputType.DELAY:
