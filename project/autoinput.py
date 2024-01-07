@@ -672,7 +672,7 @@ def __strToMouseMovement(s: str):
     elif s.startswith("rel"):
         return Recorder.MouseMovement.RELATIVE
 
-def __addRecord(args, config):
+def __makeRecord(args, config):
     record_dir = _path(config["recordDirectory"])
     if not record_dir.exists():
         record_dir.mkdir(parents=True)
@@ -791,7 +791,7 @@ def main():
     args = parser.parse_args()
     if args.command1 == "record":
         if args.command2 == "add":
-            __addRecord(args, config)
+            __makeRecord(args, config)
         elif args.command2 == "remove":
             __removeRecord(args, record_dir)
         elif args.command2 == "list":
