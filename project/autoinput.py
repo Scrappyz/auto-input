@@ -252,7 +252,7 @@ class Recorder:
         SCROLL = 3
         DELAY = 4
     
-    def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="ctrl+alt", stop_hotkey="ctrl+shift_r"):
+    def __init__(self, start_hotkey="ctrl+shift", pause_hotkey="ctrl+alt", stop_hotkey="ctrl+z"):
         start_hotkey = Hotkey(start_hotkey)
         pause_hotkey = Hotkey(pause_hotkey)
         stop_hotkey = Hotkey(stop_hotkey)
@@ -680,9 +680,9 @@ def __makeRecord(args, config):
     input = Recorder(start_hotkey=config["startHotkey"], pause_hotkey=config["pauseHotkey"], stop_hotkey=config["stopHotkey"])
     input_option = set()
     record_name = __strToJson(args.record)
-    if args._mouse:
+    if args.mouse:
         input_option.add(Recorder.InputOption.MOUSE)
-    if args._keyboard:
+    if args.keyboard:
         input_option.add(Recorder.InputOption.KEYBOARD)
     
     if not input_option:
@@ -758,8 +758,8 @@ def main():
     # record make
     cmd_record_add = record_subparser.add_parser("make", help="add a new record")
     cmd_record_add.add_argument("record", type=str)
-    cmd_record_add.add_argument("-m", "--_mouse", action="store_true", dest="_mouse", help="enable mouse when recording")
-    cmd_record_add.add_argument("-k", "--_keyboard", action="store_true", dest="_keyboard", help="enable keyboard when recording")
+    cmd_record_add.add_argument("-m", "--mouse", action="store_true", dest="mouse", help="enable mouse when recording")
+    cmd_record_add.add_argument("-k", "--keyboard", action="store_true", dest="keyboard", help="enable keyboard when recording")
     
     # record remove
     cmd_record_remove = record_subparser.add_parser("remove", help="delete record(s)")
@@ -774,7 +774,7 @@ def main():
     cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
     cmd_play.add_argument("--loop", nargs='?', type=int, default=1, const=-1, dest="loop", help="loop playback")
     cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
-    cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of _mouse movement to use (absolute or relative)")
+    cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of mouse movement to use (absolute or relative)")
     
     # config
     cmd_config = subparser.add_parser("config", help="config settings")
