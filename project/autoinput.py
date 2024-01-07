@@ -644,22 +644,6 @@ class Recorder:
             print("[END] Playback finished")
          
         _pressed.clear()
-    
-    # def __show_key(self, key):
-    #     try:
-    #         key_code = key.vk
-    #     except AttributeError:
-    #         key_code = key.value.vk
-    #     print(str(key) + " | " + str(key_code))
-        
-    # def test(self):
-    #     listener = _keyboard.Listener(on_press=self.__show_key)
-    #     listener.start()
-    #     try:
-    #         while listener.is_alive():
-    #             _time.sleep(1)
-    #     except KeyboardInterrupt:
-    #         listener.stop()
                 
     def printRecord(self):
         for i in range(len(self.__record)):
@@ -751,93 +735,88 @@ def main():
     config_path = current_dir.joinpath("config.json")
     config = {"recordDirectory" : str(current_dir.joinpath("records"))}
     
-    input = Recorder()
-    input.record()
-    input.printRecord()
-    input.play(loop=-1)
-    
-    # if not config_path.exists():
-    #     __writeConfig(config, config_path)
-    # else:
-    #     config = __readConfig(config_path)
+    if not config_path.exists():
+        __writeConfig(config, config_path)
+    else:
+        config = __readConfig(config_path)
         
-    # record_dir = config["recordDirectory"]
+    record_dir = config["recordDirectory"]
     
-    # # main
-    # parser = __argparse.ArgumentParser()
-    # parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.2.0-alpha"))
-    # subparser = parser.add_subparsers(dest="command1")
+    # main
+    parser = __argparse.ArgumentParser()
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s {0}".format("0.2.0-alpha"))
+    subparser = parser.add_subparsers(dest="command1")
     
-    # # record
-    # cmd_record = subparser.add_parser("record", help="record input")
-    # record_subparser = cmd_record.add_subparsers(dest="command2")
+    # record
+    cmd_record = subparser.add_parser("record", help="record input")
+    record_subparser = cmd_record.add_subparsers(dest="command2")
     
-    # # record add
-    # cmd_record_add = record_subparser.add_parser("add", help="add a new record")
-    # cmd_record_add.add_argument("record", type=str)
-    # cmd_record_add.add_argument("-m", "--_mouse", action="store_true", dest="_mouse", help="enable mouse when recording")
-    # cmd_record_add.add_argument("-k", "--_keyboard", action="store_true", dest="_keyboard", help="enable keyboard when recording")
+    # record add
+    cmd_record_add = record_subparser.add_parser("add", help="add a new record")
+    cmd_record_add.add_argument("record", type=str)
+    cmd_record_add.add_argument("-m", "--_mouse", action="store_true", dest="_mouse", help="enable mouse when recording")
+    cmd_record_add.add_argument("-k", "--_keyboard", action="store_true", dest="_keyboard", help="enable keyboard when recording")
     
-    # # record remove
-    # cmd_record_remove = record_subparser.add_parser("remove", help="delete record(s)")
-    # cmd_record_remove.add_argument("record", nargs='+', type=str, help="a list of records")
+    # record remove
+    cmd_record_remove = record_subparser.add_parser("remove", help="delete record(s)")
+    cmd_record_remove.add_argument("record", nargs='+', type=str, help="a list of records")
     
-    # # record list
-    # cmd_record_list = record_subparser.add_parser("list", help="list all records")
+    # record list
+    cmd_record_list = record_subparser.add_parser("list", help="list all records")
     
-    # # play
-    # cmd_play = subparser.add_parser("play", help="play a record")
-    # cmd_play.add_argument("record", nargs='?', help="the record to play")
-    # cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
-    # cmd_play.add_argument("--loop", nargs='?', type=int, default=1, const=-1, dest="loop", help="loop playback")
-    # cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
-    # cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of _mouse movement to use (absolute or relative)")
+    # play
+    cmd_play = subparser.add_parser("play", help="play a record")
+    cmd_play.add_argument("record", nargs='?', help="the record to play")
+    cmd_play.add_argument("-a", "--all", action="store_true", dest="all", help="list all records")
+    cmd_play.add_argument("--loop", nargs='?', type=int, default=1, const=-1, dest="loop", help="loop playback")
+    cmd_play.add_argument("-s", "--speed", nargs='?', type=float, default=1, dest="speed", help="speed multiplier for the playback")
+    cmd_play.add_argument("-m", "--movement", nargs='?', type=str, default="rel", dest="movement", help="the type of _mouse movement to use (absolute or relative)")
     
-    # # config
-    # cmd_config = subparser.add_parser("config", help="config settings")
-    # config_subparser = cmd_config.add_subparsers(dest="command2")
+    # config
+    cmd_config = subparser.add_parser("config", help="config settings")
+    config_subparser = cmd_config.add_subparsers(dest="command2")
     
-    # # config set
-    # cmd_config_set = config_subparser.add_parser("set", help="set config settings")
-    # cmd_config_set.add_argument("config", nargs=2, type=str, help="the config to change to a new value")
+    # config set
+    cmd_config_set = config_subparser.add_parser("set", help="set config settings")
+    cmd_config_set.add_argument("config", nargs=2, type=str, help="the config to change to a new value")
     
-    # # config get
-    # cmd_config_get = config_subparser.add_parser("get", help="get config values")
-    # cmd_config_get.add_argument("config", nargs='*', type=str, help="the config values to get")
+    # config get
+    cmd_config_get = config_subparser.add_parser("get", help="get config values")
+    cmd_config_get.add_argument("config", nargs='*', type=str, help="the config values to get")
     
-    # args = parser.parse_args()
-    # if args.command1 == "record":
-    #     if args.command2 == "add":
-    #         __addRecord(args, record_dir)
-    #     elif args.command2 == "remove":
-    #         __removeRecord(args, record_dir)
-    #     elif args.command2 == "list":
-    #         __listRecords(record_dir)
-    # elif args.command1 == "play":
-    #     if args.all:
-    #         __listRecords(record_dir)
-    #         exit()
-    #     __playRecord(args, record_dir)
-    # elif args.command1 == "config":
-    #     if args.command2 == "set":
-    #         key = args.config[0]
-    #         val = args.config[1]
-    #         if key in config:
-    #             config[key] = val
-    #             __writeConfig(config, config_path)
-    #             print("[SUCCESS] Config setting \"{0}\" has been set to \"{1}\"".format(key, val))
-    #         else:
-    #             print("[ERROR] Config setting \"{0}\" does not exist".format(key))
-    #     elif args.command2 == "get":
-    #         if not args.config:
-    #             for k, v in config.items():
-    #                 print("\"{0}\": \"{1}\"".format(k, v))
-    #         else:
-    #             for i in args.config:
-    #                 if i in config:
-    #                     print("\"{0}\": \"{1}\"".format(i, config[i]))
-    #                 else: 
-    #                     print("[ERROR] Config setting \"{0}\" does not exist".format(i))
+    args = parser.parse_args()
+    if args.command1 == "record":
+        if args.command2 == "add":
+            __addRecord(args, record_dir)
+        elif args.command2 == "remove":
+            __removeRecord(args, record_dir)
+        elif args.command2 == "list":
+            __listRecords(record_dir)
+    elif args.command1 == "play":
+        if args.all:
+            __listRecords(record_dir)
+            exit()
+        __playRecord(args, record_dir)
+    elif args.command1 == "config":
+        if args.command2 == "set":
+            key = args.config[0]
+            val = args.config[1]
+            if key in config:
+                config[key] = val
+                __writeConfig(config, config_path)
+                print("[SUCCESS] Config setting \"{0}\" has been set to \"{1}\"".format(key, val))
+            else:
+                print("[ERROR] Config setting \"{0}\" does not exist".format(key))
+        elif args.command2 == "get":
+            if not args.config:
+                for k, v in config.items():
+                    print("\"{0}\": \"{1}\"".format(k, v))
+            else:
+                for i in args.config:
+                    if i in config:
+                        print("\"{0}\": \"{1}\"".format(i, config[i]))
+                    else: 
+                        print("[ERROR] Config setting \"{0}\" does not exist".format(i))
     
 if __name__ == "__main__":
     main()
