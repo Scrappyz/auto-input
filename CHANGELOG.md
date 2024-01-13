@@ -17,6 +17,8 @@ All notable changes on this project will be documented on this file.
 - Configure hotkeys from input
 - Promptless option for `record` and `play`
 - Quiet option for `record` and `play`
+- View config with `config`
+- View config value with `config <option>`
 ### To be changed
 - Activate hotkeys on-release instead of on-press to be able to differentiate between `ctrl + shift` and `ctrl + shift + p`
 
