@@ -14,6 +14,7 @@ All notable changes on this project will be documented on this file.
 
 ## [0.2.1-alpha] - Unreleased
 ### To be added
+- Check if modules are installed
 - Configure hotkeys from input
 - Promptless option for `record` and `play`
 - Quiet option for `record` and `play`
