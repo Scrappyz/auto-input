@@ -22,6 +22,8 @@ All notable changes on this project will be documented on this file.
 - View config value with `config <option>`
 ### To be changed
 - Activate hotkeys on-release instead of on-press to be able to differentiate between `ctrl + shift` and `ctrl + shift + p`
+### To be fixed
+- Recording with `-m` only breaks when a hotkey key is pressed
 
 ## [0.2.0-alpha] - 2024-01-07
 ### Added
