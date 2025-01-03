@@ -14,10 +14,9 @@ A python program created to automate the mouse and keyboard.
 - [pynput](https://pypi.org/project/pynput/)
 
 ## Installation
-1. Once you have python installed, install the required modules using `pip`.
-2. Download the `autoinput.py` in [releases](https://github.com/Scrappyz/auto-input/releases).
-3. Place the python file in an empty directory.
-4. Run the `autoinput.py` using your chosen terminal.
+1. Clone the repository using `git clone`.
+2. Navigate to the `auto-input` folder and run `pip install .`.
+3. Run using `auto-input`.
 
 ## Usage
 ```
