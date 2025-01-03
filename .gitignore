@@ -10,3 +10,4 @@ project/keys.py
 !test/**
 !README.md
 !CHANGELOG.md
+!setup.py
